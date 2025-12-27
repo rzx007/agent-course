@@ -1,0 +1,26 @@
+{
+  "name": "week1-cli-function-calling",
+  "version": "1.0.0",
+  "description": "Week 1: CLI 工具，学习 Function Calling",
+  "type": "module",
+  "main": "dist/cli.js",
+  "scripts": {
+    "dev": "tsx src/cli.ts",
+    "build": "tsc",
+    "start": "node dist/cli.js"
+  },
+  "keywords": ["ai", "cli", "function-calling"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ai": "^3.0.0",
+    "commander": "^12.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  }
+}
+
