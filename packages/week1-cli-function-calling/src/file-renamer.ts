@@ -1,5 +1,9 @@
-import { openai } from 'ai/openai';
+import { loadEnv } from './load-env.js';
+loadEnv();
+
+import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
+import type { LanguageModelV1 } from 'ai';
 import { z } from 'zod';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -32,8 +36,15 @@ ${fileList}
 
 请为这些文件提供更好的命名建议。对于每个需要重命名的文件，返回原路径和新路径。`;
 
+  // 创建 OpenAI provider
+  const openai = createOpenAI({
+    baseURL: process.env.OPENAI_BASE_URL,
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
   const { text, toolCalls } = await generateText({
-    model: openai('gpt-4o-mini'),
+    // 使用 chat() 方法强制使用 Chat Completions API (/v1/chat/completions)
+    model: openai.chat('gpt-4o-mini') as unknown as LanguageModelV1,
     prompt,
     tools: {
       renameFile: {

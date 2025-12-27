@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
-import { PGVectorStore } from '@langchain/postgres';
+import { PGVectorStore } from '@langchain/community/vectorstores/pgvector';
 import { OpenAIEmbeddings } from '@langchain/openai';
+import { Document } from '@langchain/core/documents';
 
 /**
  * 向量存储管理
@@ -12,28 +13,23 @@ export class VectorStoreManager {
 
   constructor(connectionString: string) {
     this.pool = new Pool({ connectionString });
-    this.store = new PGVectorStore(
-      new OpenAIEmbeddings(),
-      {
-        postgresConnectionOptions: {
-          connectionString,
-        },
-        tableName: 'document_embeddings',
-        columns: {
-          idColumnName: 'id',
-          vectorColumnName: 'embedding',
-          contentColumnName: 'content',
-          metadataColumnName: 'metadata',
-        },
-      }
-    );
+    this.store = new PGVectorStore(new OpenAIEmbeddings(), {
+      pool: this.pool,
+      tableName: 'document_embeddings',
+      columns: {
+        idColumnName: 'id',
+        vectorColumnName: 'embedding',
+        contentColumnName: 'content',
+        metadataColumnName: 'metadata',
+      },
+    });
   }
 
   /**
    * 初始化数据库表
    */
   async initialize(): Promise<void> {
-    await this.store.ensureTableInDatabase();
+    await this.store.initialize();
   }
 
   /**
@@ -43,12 +39,14 @@ export class VectorStoreManager {
     texts: string[],
     metadatas?: Array<Record<string, any>>
   ): Promise<string[]> {
-    return await this.store.addDocuments(
-      texts.map((text, index) => ({
-        pageContent: text,
-        metadata: metadatas?.[index] || {},
-      }))
+    const documents = texts.map(
+      (text, index) =>
+        new Document({
+          pageContent: text,
+          metadata: metadatas?.[index] || {},
+        })
     );
+    return await this.store.addDocuments(documents);
   }
 
   /**

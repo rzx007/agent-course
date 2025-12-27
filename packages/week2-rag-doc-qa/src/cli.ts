@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+import { loadEnv } from './load-env.js';
+loadEnv();
+
 import { Command } from 'commander';
 import * as readline from 'readline';
 import * as path from 'path';
@@ -7,7 +10,6 @@ import * as fs from 'fs/promises';
 import { loadDocument, chunkDocument } from './document-loader.js';
 import { VectorStoreManager } from './vector-store.js';
 import { QABot } from './qa-bot.js';
-import 'dotenv/config';
 
 const program = new Command();
 

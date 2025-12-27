@@ -1,32 +1,3 @@
----
-name: 创建 AI Agent 学习子项目结构
-overview: 为4周学习计划创建 monorepo 子项目结构，每个 week 对应一个独立的 package，包含基础配置和 README
-todos:
-  - id: create-week1-structure
-    content: 创建 Week 1 CLI Function Calling 项目结构和配置文件
-    status: completed
-  - id: create-week2-structure
-    content: 创建 Week 2 RAG 文档问答项目结构和配置文件
-    status: completed
-  - id: create-week3-structure
-    content: 创建 Week 3 Next.js AI Chat 项目结构和配置文件
-    status: cancelled
-  - id: create-week4-structure
-    content: 创建 Week 4 LangGraph Agent 项目结构和配置文件
-    status: cancelled
-  - id: create-shared-config
-    content: 创建根目录共享配置文件（tsconfig.json, .gitignore）
-    status: completed
-  - id: update-root-readme
-    content: 更新根目录 README.md 添加项目总览和使用说明
-    status: completed
-    dependencies:
-      - create-week1-structure
-      - create-week2-structure
-      - create-week3-structure
-      - create-week4-structure
----
-
 # 创建 AI Agent
 
 学习子项目结构
@@ -46,8 +17,6 @@ agent-course/
 ├── pnpm-workspace.yaml                  # pnpm workspace 配置（已存在）
 └── course-plan.md                       # 学习计划（已存在）
 ```
-
-
 
 ## 实施步骤
 
