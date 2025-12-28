@@ -23,7 +23,6 @@ export async function renameFilesInDirectory(
   instruction: string
 ) {
   // 读取目录中的所有文件
-  console.log("directoryPath", process.cwd());
   const files = await fs.readdir(directoryPath);
   const fileList = files.map((file) => `- ${file}`).join("\n");
 
@@ -41,7 +40,7 @@ ${fileList}
     apiKey: process.env.OPENAI_API_KEY,
   });
 
-  const { text, toolCalls } = await generateText({
+  const { text, toolCalls, toolResults } = await generateText({
     // 使用 chat() 方法强制使用 Chat Completions API (/v1/chat/completions)
     model: openai.chat("mimo-v2-flash"),
     prompt,
@@ -63,6 +62,7 @@ ${fileList}
 
               // 执行重命名
               await fs.rename(oldPath, newPath);
+              console.log(`重命名成功: ${oldPath} -> ${newPath}`);
               results.push({
                 success: true,
                 oldPath: file.oldPath,
@@ -83,5 +83,5 @@ ${fileList}
     },
   });
 
-  return { text, toolCalls };
+  return { text, toolCalls, toolResults };
 }

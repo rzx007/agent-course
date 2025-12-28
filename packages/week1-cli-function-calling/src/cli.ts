@@ -59,7 +59,7 @@ program
   )
   .action(async (options) => {
     try {
-      const { text, toolCalls } = await renameFilesInDirectory(
+      const { text, toolResults } = await renameFilesInDirectory(
         options.dir,
         options.instruction
       );
@@ -67,11 +67,11 @@ program
       console.log("\nAI 分析:");
       console.log(text);
 
-      if (toolCalls && toolCalls.length > 0) {
+      if (toolResults && toolResults.length > 0) {
         console.log("\n执行结果:");
-        for (const toolCall of toolCalls) {
-          if (toolCall.toolName === "renameFile" && "result" in toolCall) {
-            const results = (toolCall as any).result;
+        for (const toolCall of toolResults) {
+          if (toolCall.toolName === "renameFile" && "output" in toolCall) {
+            const results = (toolCall as any).output;
             if (Array.isArray(results)) {
               results.forEach((result: any) => {
                 if (result.success) {
