@@ -1,7 +1,7 @@
 import { loadEnv } from './load-env.js';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText, streamText } from 'ai';
-import type { LanguageModelV1 } from 'ai';
+import type { LanguageModel } from 'ai';
 
 /**
  * 基础对话示例
@@ -19,7 +19,7 @@ export async function basicChat(
     apiKey: process.env.OPENAI_API_KEY,
   });
 
-  const model = openai.chat('mimo-v2-flash') as unknown as LanguageModelV1;
+  const model = openai.chat('mimo-v2-flash');
 
   // 如果启用流式输出
   if (options?.stream) {
@@ -45,7 +45,7 @@ export async function basicChat(
   const { text } = await generateText({
     model,
     prompt,
-  });
+  });``
 
   return text;
 }

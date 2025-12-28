@@ -1,10 +1,10 @@
-import { loadEnv } from './load-env.js';
+import { loadEnv } from "./load-env.js";
 loadEnv();
 
-import express from 'express';
-import { createOpenAI } from '@ai-sdk/openai';
-import { streamText, generateText } from 'ai';
-import type { LanguageModelV1 } from 'ai';
+import express from "express";
+import { createOpenAI } from "@ai-sdk/openai";
+import { streamText, generateText } from "ai";
+import type { LanguageModel } from "ai";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,23 +18,23 @@ const openai = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const model = openai.chat('mimo-v2-flash') as unknown as LanguageModelV1;
+const model = openai.chat("mimo-v2-flash");
 
 // 方式1: 普通流式输出（纯文本，chunked transfer）
-app.post('/api/chat/stream', async (req, res) => {
+app.post("/api/chat/stream", async (req, res) => {
   try {
     const { prompt, baseURL } = req.body;
 
     if (!prompt) {
-      return res.status(400).json({ error: '缺少 prompt 参数' });
+      return res.status(400).json({ error: "缺少 prompt 参数" });
     }
 
     // 如果提供了自定义 baseURL，创建新的 provider
     const currentModel = baseURL
-      ? (createOpenAI({
+      ? createOpenAI({
           baseURL,
           apiKey: process.env.OPENAI_API_KEY,
-        }).chat('mimo-v2-flash') as unknown as LanguageModelV1)
+        }).chat("mimo-v2-flash")
       : model;
 
     const result = streamText({
@@ -43,8 +43,8 @@ app.post('/api/chat/stream', async (req, res) => {
     });
 
     // 设置响应头，支持流式输出
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Transfer-Encoding', 'chunked');
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.setHeader("Transfer-Encoding", "chunked");
 
     // 流式输出文本
     const textStream = (result as any).textStream as AsyncIterable<string>;
@@ -54,9 +54,9 @@ app.post('/api/chat/stream', async (req, res) => {
 
     res.end();
   } catch (error) {
-    console.error('流式输出错误:', error);
+    console.error("流式输出错误:", error);
     if (!res.headersSent) {
-      res.status(500).json({ error: '服务器错误' });
+      res.status(500).json({ error: "服务器错误" });
     } else {
       res.end();
     }
@@ -64,20 +64,20 @@ app.post('/api/chat/stream', async (req, res) => {
 });
 
 // 方式2: SSE 格式流式输出（Server-Sent Events）
-app.post('/api/chat/stream/sse', async (req, res) => {
+app.post("/api/chat/stream/sse", async (req, res) => {
   try {
     const { prompt, baseURL } = req.body;
 
     if (!prompt) {
-      return res.status(400).json({ error: '缺少 prompt 参数' });
+      return res.status(400).json({ error: "缺少 prompt 参数" });
     }
 
     // 如果提供了自定义 baseURL，创建新的 provider
     const currentModel = baseURL
-      ? (createOpenAI({
+      ? createOpenAI({
           baseURL,
           apiKey: process.env.OPENAI_API_KEY,
-        }).chat('mimo-v2-flash') as unknown as LanguageModelV1)
+        }).chat("mimo-v2-flash")
       : model;
 
     const result = streamText({
@@ -86,10 +86,10 @@ app.post('/api/chat/stream/sse', async (req, res) => {
     });
 
     // 设置 SSE 响应头
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no'); // 禁用 Nginx 缓冲
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no"); // 禁用 Nginx 缓冲
 
     // 流式输出文本（SSE 格式）
     const textStream = (result as any).textStream as AsyncIterable<string>;
@@ -99,34 +99,34 @@ app.post('/api/chat/stream/sse', async (req, res) => {
     }
 
     // 发送结束标记
-    res.write('data: [DONE]\n\n');
+    res.write("data: [DONE]\n\n");
     res.end();
   } catch (error) {
-    console.error('SSE 流式输出错误:', error);
+    console.error("SSE 流式输出错误:", error);
     if (!res.headersSent) {
-      res.status(500).json({ error: '服务器错误' });
+      res.status(500).json({ error: "服务器错误" });
     } else {
-      res.write(`data: ${JSON.stringify({ error: '服务器错误' })}\n\n`);
+      res.write(`data: ${JSON.stringify({ error: "服务器错误" })}\n\n`);
       res.end();
     }
   }
 });
 
 // 方式3: 使用 AI SDK 内置的 pipeTextStreamToResponse 方法
-app.post('/api/chat/stream/pipe', async (req, res) => {
+app.post("/api/chat/stream/pipe", async (req, res) => {
   try {
     const { prompt, baseURL } = req.body;
 
     if (!prompt) {
-      return res.status(400).json({ error: '缺少 prompt 参数' });
+      return res.status(400).json({ error: "缺少 prompt 参数" });
     }
 
     // 如果提供了自定义 baseURL，创建新的 provider
     const currentModel = baseURL
-      ? (createOpenAI({
+      ? createOpenAI({
           baseURL,
           apiKey: process.env.OPENAI_API_KEY,
-        }).chat('mimo-v2-flash') as unknown as LanguageModelV1)
+        }).chat("mimo-v2-flash")
       : model;
 
     const result = streamText({
@@ -137,28 +137,28 @@ app.post('/api/chat/stream/pipe', async (req, res) => {
     // 使用 AI SDK 内置方法直接流式输出到响应
     (result as any).pipeTextStreamToResponse(res);
   } catch (error) {
-    console.error('Pipe 流式输出错误:', error);
+    console.error("Pipe 流式输出错误:", error);
     if (!res.headersSent) {
-      res.status(500).json({ error: '服务器错误' });
+      res.status(500).json({ error: "服务器错误" });
     }
   }
 });
 
 // 非流式输出接口
-app.post('/api/chat', async (req, res) => {
+app.post("/api/chat", async (req, res) => {
   try {
     const { prompt, baseURL } = req.body;
 
     if (!prompt) {
-      return res.status(400).json({ error: '缺少 prompt 参数' });
+      return res.status(400).json({ error: "缺少 prompt 参数" });
     }
 
     // 如果提供了自定义 baseURL，创建新的 provider
     const currentModel = baseURL
-      ? (createOpenAI({
+      ? createOpenAI({
           baseURL,
           apiKey: process.env.OPENAI_API_KEY,
-        }).chat('mimo-v2-flash') as unknown as LanguageModelV1)
+        }).chat("mimo-v2-flash")
       : model;
 
     const { text } = await generateText({
@@ -168,22 +168,28 @@ app.post('/api/chat', async (req, res) => {
 
     res.json({ text });
   } catch (error) {
-    console.error('生成文本错误:', error);
-    res.status(500).json({ error: '服务器错误' });
+    console.error("生成文本错误:", error);
+    res.status(500).json({ error: "服务器错误" });
   }
 });
 
 // 健康检查接口
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
 });
 
 app.listen(PORT, () => {
   console.log(`服务器运行在 http://localhost:${PORT}`);
   console.log(`\n流式输出接口:`);
-  console.log(`  方式1 (普通流式): POST http://localhost:${PORT}/api/chat/stream`);
-  console.log(`  方式2 (SSE格式):  POST http://localhost:${PORT}/api/chat/stream/sse`);
-  console.log(`  方式3 (Pipe方法): POST http://localhost:${PORT}/api/chat/stream/pipe`);
+  console.log(
+    `  方式1 (普通流式): POST http://localhost:${PORT}/api/chat/stream`
+  );
+  console.log(
+    `  方式2 (SSE格式):  POST http://localhost:${PORT}/api/chat/stream/sse`
+  );
+  console.log(
+    `  方式3 (Pipe方法): POST http://localhost:${PORT}/api/chat/stream/pipe`
+  );
   console.log(`\n普通接口:`);
   console.log(`  POST http://localhost:${PORT}/api/chat`);
   console.log(`\n健康检查:`);

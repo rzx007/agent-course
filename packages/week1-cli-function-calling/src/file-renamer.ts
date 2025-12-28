@@ -1,12 +1,12 @@
-import { loadEnv } from './load-env.js';
+import { loadEnv } from "./load-env.js";
 loadEnv();
 
-import { createOpenAI } from '@ai-sdk/openai';
-import { generateText } from 'ai';
-import type { LanguageModelV1 } from 'ai';
-import { z } from 'zod';
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import { createOpenAI } from "@ai-sdk/openai";
+import { generateText } from "ai";
+import type { LanguageModel } from "ai";
+import { z } from "zod";
+import * as fs from "fs/promises";
+import * as path from "path";
 
 /**
  * 文件重命名工具
@@ -14,8 +14,8 @@ import * as path from 'path';
  */
 
 const renameFileSchema = z.object({
-  oldPath: z.string().describe('原文件路径'),
-  newPath: z.string().describe('新文件路径'),
+  oldPath: z.string().describe("原文件路径"),
+  newPath: z.string().describe("新文件路径"),
 });
 
 export async function renameFilesInDirectory(
@@ -23,10 +23,9 @@ export async function renameFilesInDirectory(
   instruction: string
 ) {
   // 读取目录中的所有文件
+  console.log("directoryPath", process.cwd());
   const files = await fs.readdir(directoryPath);
-  const fileList = files
-    .map((file) => `- ${file}`)
-    .join('\n');
+  const fileList = files.map((file) => `- ${file}`).join("\n");
 
   const prompt = `你是一个文件重命名助手。当前目录中有以下文件：
 
@@ -44,13 +43,13 @@ ${fileList}
 
   const { text, toolCalls } = await generateText({
     // 使用 chat() 方法强制使用 Chat Completions API (/v1/chat/completions)
-    model: openai.chat('gpt-4o-mini') as unknown as LanguageModelV1,
+    model: openai.chat("mimo-v2-flash"),
     prompt,
     tools: {
       renameFile: {
-        description: '重命名一个文件',
-        parameters: z.object({
-          files: z.array(renameFileSchema).describe('要重命名的文件列表'),
+        description: "重命名一个文件",
+        inputSchema: z.object({
+          files: z.array(renameFileSchema).describe("要重命名的文件列表"),
         }),
         execute: async ({ files }) => {
           const results = [];
@@ -58,10 +57,10 @@ ${fileList}
             try {
               const oldPath = path.join(directoryPath, file.oldPath);
               const newPath = path.join(directoryPath, file.newPath);
-              
+
               // 检查原文件是否存在
               await fs.access(oldPath);
-              
+
               // 执行重命名
               await fs.rename(oldPath, newPath);
               results.push({
@@ -86,4 +85,3 @@ ${fileList}
 
   return { text, toolCalls };
 }
-
