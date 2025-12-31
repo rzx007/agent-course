@@ -52,8 +52,8 @@ import {
 import { Loader } from "@/components/ai-elements/loader";
 const models = [
   {
-    name: "GPT 4o",
-    value: "openai/gpt-4o",
+    name: "Xiaomi MIMO",
+    value: "xiaomi/mimo",
   },
   {
     name: "Deepseek R1",
@@ -86,10 +86,10 @@ const ChatBotDemo = () => {
     setInput("");
   };
   return (
-    <div className="max-w-4xl mx-auto p-6 relative size-full h-screen">
+    <div className="relative size-full h-screen">
       <div className="flex flex-col h-full">
         <Conversation className="h-full">
-          <ConversationContent>
+          <ConversationContent className="max-w-4xl mx-auto">
             {messages.map((message, index) => (
               <div key={message.id}>
                 {message.role === "assistant" &&
@@ -181,7 +181,7 @@ const ChatBotDemo = () => {
         </Conversation>
         <PromptInput
           onSubmit={handleSubmit}
-          className="mt-4"
+          className="max-w-4xl mx-auto mt-4"
           globalDrop
           multiple
         >
