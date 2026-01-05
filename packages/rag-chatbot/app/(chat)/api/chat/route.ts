@@ -1,4 +1,10 @@
-import { streamText, UIMessage, convertToModelMessages } from "ai";
+import {
+  streamText,
+  UIMessage,
+  convertToModelMessages,
+  StreamTextResult,
+  ModelMessage,
+} from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createDeepSeek } from "@ai-sdk/deepseek";
 export async function POST(request: Request) {
