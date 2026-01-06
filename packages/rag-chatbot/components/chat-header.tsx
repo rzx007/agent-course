@@ -7,6 +7,8 @@ import { SidebarToggle } from "@/components/sidebar-toggle";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import { useSidebar } from "./ui/sidebar";
+import { UserButton } from "@daveyplate/better-auth-ui";
+import { authClient } from "@/lib/auth-client";
 
 function PureChatHeader({
   chatId,
@@ -19,6 +21,8 @@ function PureChatHeader({
   const { open } = useSidebar();
 
   const { width: windowWidth } = useWindowSize();
+
+  const session = authClient.useSession();
 
   return (
     <header className="sticky top-0 flex items-center gap-2 bg-background px-2 py-1.5 md:px-2">
@@ -37,10 +41,15 @@ function PureChatHeader({
           <span className="md:sr-only">新对话</span>
         </Button>
       )}
-
-      <Button className="order-3 hidden bg-zinc-900 px-2 text-zinc-50 hover:bg-zinc-800 md:ml-auto md:flex md:h-fit dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200">
-        登录
-      </Button>
+      {session.data ? (
+        <div className="order-3 md:ml-auto md:flex">
+          <UserButton size="icon" />
+        </div>
+      ) : (
+        <Button className="order-3 hidden bg-zinc-900 px-2 text-zinc-50 hover:bg-zinc-800 md:ml-auto md:flex md:h-fit dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200">
+          登录
+        </Button>
+      )}
     </header>
   );
 }
