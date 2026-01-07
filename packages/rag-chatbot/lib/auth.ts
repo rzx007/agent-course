@@ -1,4 +1,6 @@
 import { betterAuth } from "better-auth";
+import { username } from "better-auth/plugins";
+import { openAPI } from "better-auth/plugins"; // /api/auth/reference
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import * as authSchema from "../auth-schema";
 import { db } from "@/lib/db";
@@ -17,4 +19,5 @@ export const auth = betterAuth({
       clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
     },
   },
+  plugins: [username(), openAPI()],
 });

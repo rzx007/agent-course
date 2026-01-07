@@ -73,34 +73,35 @@ export const db = drizzle(client);
 
 > **重要**：确保环境变量 `POSTGRES_URL` 已正确配置。
 
-### 2. 使用 Better Auth CLI 生成 Schema
+### 3.创建业务表 (lib/db/schema.ts)
 
-**重要：不要手动创建 `auth-schema.ts`！**应该使用 Better Auth CLI 自动生成。
+```typescript
+import type { InferSelectModel } from "drizzle-orm";
+import {
+  json,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 
-首先，在你的 `drizzle.config.ts` 中配置好 schema 路径（上一步已完成）。
 
-然后运行 Better Auth CLI 生成命令：
+export const message = pgTable("Message_v2", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  chatId: uuid("chatId")
+    .notNull()
+    .references(() => chat.id),
+  role: varchar("role").notNull(),
+  parts: json("parts").notNull(),
+  attachments: json("attachments").notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+});
 
-```bash
-pnpm dlx @better-auth/cli generate
+export type DBMessage = InferSelectModel<typeof message>;
+
+// 其他业务表
 ```
-
-这个命令会：
-
-1. 分析你的 Better Auth 配置（从 `lib/auth.ts`）
-2. 自动生成 `auth-schema.ts` 文件，包含所有必需的表结构：
-   - `user` - 用户表
-   - `session` - 会话表
-   - `account` - 账户表（用于 OAuth）
-   - `verification` - 验证表（用于邮箱验证等）
-3. 根据你启用的插件自动添加额外的表结构
-4. 包含完整的 Drizzle ORM schema 定义（表结构、索引、关系等）
-
-**注意事项：**
-
-- 每次修改 Better Auth 配置（如添加新插件）后，都需要重新运行 `generate` 命令
-- 生成的文件可以提交到版本控制系统
-- 如果需要自定义表结构，应该在自己的 schema 文件中扩展
 
 ### 4. 配置 Drizzle Kit (`drizzle.config.ts`)
 
@@ -208,7 +209,7 @@ export const auth = betterAuth({
 
 > **注意**：此时 `auth-schema` 还不存在，这是正常的。我们会在下一步生成它。
 
-### 3. 使用 Better Auth CLI 生成认证 Schema
+### 3. 使用 Better Auth CLI 生成 Schema
 
 **重要：不要手动创建 `auth-schema.ts`！**
 
@@ -475,12 +476,13 @@ export default async function ChatLayout({
 > Better Auth UI 依赖前面配置的所有功能（认证 API、客户端、路由保护）。现在基础功能都就绪了，可以添加美观的 UI 界面。
 
 > **💡 提示：Better Auth UI 是可选的！**
-> 
+>
 > Better Auth UI 提供了开箱即用的认证界面组件，可以快速搭建登录、注册等页面。
-> 
+>
 > **如果你想自定义界面**，可以跳过本步骤，直接使用 `authClient` 提供的方法（如 `signIn`、`signUp`、`signOut` 等）来构建自己的 UI 组件。
-> 
+>
 > 例如，自定义登录表单：
+>
 > ```typescript
 > import { authClient } from '@/lib/auth-client';
 > 
@@ -499,7 +501,7 @@ export default async function ChatLayout({
 >   router.push('/dashboard');
 > }
 > ```
-> 
+>
 > **本文档选择使用 Better Auth UI**，因为它能快速实现完整的认证流程，减少开发时间。
 
 ### 1. 安装 Better Auth UI

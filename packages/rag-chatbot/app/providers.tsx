@@ -1,6 +1,7 @@
 "use client";
 
-import { AuthUIProvider } from "@daveyplate/better-auth-ui";
+import { AuthUIProviderTanstack } from "@daveyplate/better-auth-ui/tanstack";
+import { AuthQueryProvider } from "@daveyplate/better-auth-tanstack";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
@@ -12,18 +13,20 @@ export function Providers({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   return (
-    <AuthUIProvider
-      authClient={authClient}
-      navigate={router.push}
-      replace={router.replace}
-      onSessionChange={() => {
-        // Clear router cache (protected routes)
-        router.refresh();
-      }}
-      Link={Link}
-      localization={zhCN} // 完整的中文本地化配置
-    >
-      {children}
-    </AuthUIProvider>
+    <AuthQueryProvider>
+      <AuthUIProviderTanstack
+        authClient={authClient}
+        navigate={router.push}
+        replace={router.replace}
+        onSessionChange={() => {
+          // Clear router cache (protected routes)
+          router.refresh();
+        }}
+        Link={Link}
+        localization={zhCN} // 完整的中文本地化配置
+      >
+        {children}
+      </AuthUIProviderTanstack>
+    </AuthQueryProvider>
   );
 }
