@@ -2,9 +2,12 @@ import {
   streamText,
   UIMessage,
   convertToModelMessages,
+  generateId,
   StreamTextResult,
   ModelMessage,
 } from "ai";
+import { after } from "next/server";
+import { createResumableStreamContext } from "resumable-stream";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createDeepSeek } from "@ai-sdk/deepseek";
 export async function POST(request: Request) {
@@ -53,5 +56,8 @@ export async function POST(request: Request) {
   return response.toUIMessageStreamResponse({
     sendSources: true,
     sendReasoning: true,
+    onFinish: () => {
+      console.log("Stream finished");
+    },
   });
 }

@@ -1,4 +1,6 @@
 "use client";
+import { Greeting } from "@/components/greeting";
+
 import {
   Conversation,
   ConversationContent,
@@ -66,7 +68,7 @@ const ChatBotDemo = () => {
   const [input, setInput] = useState("");
   const [model, setModel] = useState<string>(models[0].value);
   const [webSearch, setWebSearch] = useState(false);
-  const { messages, sendMessage, status, regenerate } = useChat();
+  const { messages, sendMessage, status, regenerate, stop } = useChat();
   const handleSubmit = (message: PromptInputMessage) => {
     const hasText = Boolean(message.text);
     const hasAttachments = Boolean(message.files?.length);
@@ -91,6 +93,7 @@ const ChatBotDemo = () => {
     <div className="relative size-full h-screen ">
       <ChatHeader chatId="" isReadonly={false} />
       <div className="flex flex-col h-[calc(100%-50px)]">
+        {messages.length === 0 && <Greeting />}
         <Conversation className="h-full">
           <ConversationContent className="max-w-4xl mx-auto">
             {messages.map((message, index) => (
@@ -235,7 +238,13 @@ const ChatBotDemo = () => {
                 </PromptInputSelectContent>
               </PromptInputSelect>
             </PromptInputTools>
-            <PromptInputSubmit disabled={!input && !status} status={status} />
+            <PromptInputSubmit
+              disabled={!input && !status}
+              status={status}
+              onClick={() => {
+                stop();
+              }}
+            />
           </PromptInputFooter>
         </PromptInput>
       </div>

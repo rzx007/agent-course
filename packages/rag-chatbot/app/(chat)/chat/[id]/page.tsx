@@ -37,7 +37,13 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { useState } from "react";
 import { useChat } from "@ai-sdk/react";
-import { CopyIcon, GlobeIcon, RefreshCcwIcon } from "lucide-react";
+import {
+  Bot,
+  CopyIcon,
+  GlobeIcon,
+  MessageCircle,
+  RefreshCcwIcon,
+} from "lucide-react";
 import {
   Source,
   Sources,
