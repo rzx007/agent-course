@@ -13,7 +13,7 @@ import {
   type SQL,
 } from "drizzle-orm";
 import { ChatSDKError } from "../errors";
-import { type Chat, chat, type DBMessage, message } from "./schema";
+import { type Chat, chat, type DBMessage, message, stream } from "./schema";
 
 export async function saveChat({
   id,
@@ -25,14 +25,19 @@ export async function saveChat({
   title: string;
 }) {
   try {
-    return await db.insert(chat).values({
-      id,
-      createdAt: new Date(),
-      userId,
-      title,
-      visibility: "public",
-    });
+    // 使用 onConflictDoNothing 避免重复插入
+    return await db
+      .insert(chat)
+      .values({
+        id,
+        createdAt: new Date(),
+        userId,
+        title,
+        visibility: "public",
+      })
+      .onConflictDoNothing();
   } catch (_error) {
+    console.error("Failed to save chat:", _error);
     throw new ChatSDKError("bad_request:database", "Failed to save chat");
   }
 }
@@ -175,6 +180,7 @@ export async function saveMessages({ messages }: { messages: DBMessage[] }) {
   try {
     return await db.insert(message).values(messages);
   } catch (_error) {
+    console.error("Failed to save messages:", _error);
     throw new ChatSDKError("bad_request:database", "Failed to save messages");
   }
 }
@@ -315,6 +321,42 @@ export async function getMessageCountByUserId({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get message count by user id"
+    );
+  }
+}
+export async function createStreamId({
+  streamId,
+  chatId,
+}: {
+  streamId: string;
+  chatId: string;
+}) {
+  try {
+    await db
+      .insert(stream)
+      .values({ id: streamId, chatId, createdAt: new Date() });
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create stream id"
+    );
+  }
+}
+
+export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
+  try {
+    const streamIds = await db
+      .select({ id: stream.id })
+      .from(stream)
+      .where(eq(stream.chatId, chatId))
+      .orderBy(asc(stream.createdAt))
+      .execute();
+
+    return streamIds.map(({ id }) => id);
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get stream ids by chat id"
     );
   }
 }
