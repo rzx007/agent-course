@@ -8,10 +8,7 @@ export const Greeting = () => {
           <Bot className="size-10" /> + <MessageCircle className="size-10" />
         </p>
 
-        <p>
-          使用 react18 + shadcn/ui + tailwindcss
-          和人工智能软件开发工具包构建的聊天机器人模板。
-        </p>
+        <p>使用 Nextjs + Shadcn/ui + AI SDK 支持会话流恢复的聊天机器人模板。</p>
         <p>在客户端使用 &quot;useChat&quot; 钩子，以创建无缝的聊天体验。</p>
       </div>
     </div>

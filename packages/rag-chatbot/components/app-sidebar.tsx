@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Trash2, Plus } from "lucide-react";
 import { SidebarHistory } from "@/components/sidebar-history";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export function AppSidebar() {
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
+  const router = useRouter();
 
   return (
     <>
@@ -49,7 +51,7 @@ export function AppSidebar() {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent align="end" className="hidden md:block">
-                    Delete All Chats
+                    清除所有会话
                   </TooltipContent>
                 </Tooltip>
                 <Tooltip>
@@ -58,12 +60,16 @@ export function AppSidebar() {
                       className="h-8 p-1 md:h-fit md:p-2"
                       type="button"
                       variant="ghost"
+                      onClick={() => {
+                        router.push("/");
+                        router.refresh();
+                      }}
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent align="end" className="hidden md:block">
-                    New Chat
+                    新对话
                   </TooltipContent>
                 </Tooltip>
               </div>

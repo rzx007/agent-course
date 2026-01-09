@@ -7,76 +7,92 @@ import {
 } from "@/lib/db/queries";
 import { getStreamContext } from "../../route";
 import { auth } from "@/lib/auth";
+import { ChatSDKError } from "@/lib/errors";
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id: chatId } = await params;
-  const streamContext = getStreamContext();
-  const resumeRequestedAt = new Date();
+  try {
+    const { id: chatId } = await params;
+    const streamContext = getStreamContext();
+    const resumeRequestedAt = new Date();
 
-  // 1. 基础校验
-  if (!streamContext) return new Response(null, { status: 204 });
-  const session = await auth.api.getSession({ headers: request.headers });
-  if (!session?.user) return new Response("Unauthorized", { status: 401 });
+    // 1. 基础校验
+    if (!streamContext) return new Response(null, { status: 204 });
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (!session?.user) return new Response("Unauthorized", { status: 401 });
 
-  // 2. 获取该聊天对应的最新 Stream ID
-  const streamIds = await getStreamIdsByChatId({ chatId });
-  const recentStreamId = streamIds.at(-1);
-  if (!recentStreamId) return new Response(null, { status: 204 });
+    // 2. 获取该聊天对应的最新 Stream ID
+    const streamIds = await getStreamIdsByChatId({ chatId });
+    const recentStreamId = streamIds.at(-1);
+    if (!recentStreamId) return new Response(null, { status: 204 });
 
-  // 3. 【关键逻辑】使用 Flag 检测 Redis 是否未命中
-  let isRedisMissed = false;
+    // 3. 【关键逻辑】使用 Flag 检测 Redis 是否未命中
+    let isRedisMissed = false;
 
-  const emptyDataStream = createUIMessageStream({
-    execute: () => {}, // 一个什么都不做的流, 也可以添加其他的逻辑
-  });
+    const emptyDataStream = createUIMessageStream({
+      execute: () => {}, // 一个什么都不做的流, 也可以添加其他的逻辑
+    });
 
-  //   new ReadableStream()
-  const stream = await streamContext.resumableStream(recentStreamId, () => {
-    // 如果这个回调被执行了，说明 Redis 里找不到活跃流（可能生成完了，也可能过期了）
-    isRedisMissed = true;
-    return emptyDataStream.pipeThrough(new JsonToSseTransformStream());
-  });
+    //   new ReadableStream()
+    const stream = await streamContext.resumableStream(recentStreamId, () => {
+      // 如果这个回调被执行了，说明 Redis 里找不到活跃流（可能生成完了，也可能过期了）
+      isRedisMissed = true;
+      return emptyDataStream.pipeThrough(new JsonToSseTransformStream());
+    });
 
-  // 4. 【核心判断】如果 stream 是 null（已完成）或者 触发了回调（找不到 ID）
-  if (stream === null || isRedisMissed) {
-    const messages = await getMessagesByChatId({ id: chatId });
-    const lastAssistantMsg = messages.at(-1);
+    // 4. 【核心判断】如果 stream 是 null（已完成）或者 触发了回调（找不到 ID）
+    if (stream === null || isRedisMissed) {
+      const messages = await getMessagesByChatId({ id: chatId });
+      const lastAssistantMsg = messages.at(-1);
 
-    // 兜底逻辑：如果数据库里有一条“非常新鲜”的回复，说明流刚断，补发给前端
-    if (
-      lastAssistantMsg?.role === "assistant" &&
-      differenceInSeconds(
-        resumeRequestedAt,
-        new Date(lastAssistantMsg.createdAt)
-      ) < 15
-    ) {
-      const restoredStream = createUIMessageStream({
-        execute: ({ writer }) => {
-          writer.write({
-            type: "data-appendMessage", // 配合 useChat 的 onData 处理
-            data: JSON.stringify(lastAssistantMsg),
-            transient: true,
-          });
-        },
-      });
+      // 兜底逻辑：如果数据库里有一条“非常新鲜”的回复，说明流刚断，补发给前端
+      if (
+        lastAssistantMsg?.role === "assistant" &&
+        differenceInSeconds(
+          resumeRequestedAt,
+          new Date(lastAssistantMsg.createdAt)
+        ) < 15
+      ) {
+        const restoredStream = createUIMessageStream({
+          execute: ({ writer }) => {
+            writer.write({
+              type: "data-appendMessage", // 配合 useChat 的 onData 处理
+              data: JSON.stringify(lastAssistantMsg),
+              transient: true, // 临时数据，不会出现在messages里，客户端通过onData获取
+            });
+          },
+        });
 
-      return new Response(
-        restoredStream.pipeThrough(new JsonToSseTransformStream()),
-        { headers: { "Content-Type": "text/event-stream" } }
-      );
+        return new Response(
+          restoredStream.pipeThrough(new JsonToSseTransformStream()),
+          { headers: { "Content-Type": "text/event-stream" } }
+        );
+      }
+
+      // 确实没流了，返回 204 让前端停止 loading
+      return new Response(null, { status: 204 });
     }
 
-    // 确实没流了，返回 204 让前端停止 loading
-    return new Response(null, { status: 204 });
-  }
+    // 5. 命中 Redis，返回正在进行的流
+    return new Response(stream, {
+      headers: { "Content-Type": "text/event-stream" },
+    });
+  } catch (error) {
+    // 如果是 Redis 连接错误，返回 204 让前端停止等待
+    if (
+      error instanceof Error &&
+      JSON.stringify(error).includes("ECONNREFUSED")
+    ) {
+      console.warn(
+        " > Redis connection refused - cannot resume stream, returning 204"
+      );
+      return new Response(null, { status: 204 });
+    }
 
-  // 5. 命中 Redis，返回正在进行的流
-  return new Response(stream, {
-    headers: { "Content-Type": "text/event-stream" },
-  });
+    return new ChatSDKError("offline:chat").toResponse();
+  }
 }
 /**
  * 状态 A (命中活跃流)：Redis 发现流还在跑。返回 ReadableStream。!stream 为假，直接返回给前端，对话继续。

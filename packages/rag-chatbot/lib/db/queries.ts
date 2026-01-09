@@ -44,14 +44,21 @@ export async function saveChat({
 
 export async function deleteChatById({ id }: { id: string }) {
   try {
+    // 1. 先删除关联的 Stream 记录
+    await db.delete(stream).where(eq(stream.chatId, id));
+
+    // 2. 再删除关联的 Message 记录
     await db.delete(message).where(eq(message.chatId, id));
 
+    // 3. 最后删除 Chat 记录（当前未使用数据库级联删除）
     const [chatsDeleted] = await db
       .delete(chat)
       .where(eq(chat.id, id))
       .returning();
+
     return chatsDeleted;
   } catch (_error) {
+    console.error("Failed to delete chat by id:", _error);
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete chat by id"
@@ -72,7 +79,13 @@ export async function deleteAllChatsByUserId({ userId }: { userId: string }) {
 
     const chatIds = userChats.map((c) => c.id);
 
+    // 1. 先删除这些 Chat 对应的 Stream 记录
+    await db.delete(stream).where(inArray(stream.chatId, chatIds));
+
+    // 2. 再删除这些 Chat 对应的 Message 记录
     await db.delete(message).where(inArray(message.chatId, chatIds));
+
+    // 3. 最后删除 Chat 记录
     const deletedChats = await db
       .delete(chat)
       .where(eq(chat.userId, userId))
@@ -101,7 +114,7 @@ export async function getChatsByUserId({
   try {
     const extendedLimit = limit + 1;
 
-    const query = (whereCondition?: SQL<any>) =>
+    const query = (whereCondition?: SQL) =>
       db
         .select()
         .from(chat)

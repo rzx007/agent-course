@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -17,6 +18,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ChatItem, type ChatItemData } from "./sidebar-history-item";
+import { useSession } from "@/lib/auth-client";
+import {
+  isToday,
+  isYesterday,
+  isWithinInterval,
+  subDays,
+  subMonths,
+  startOfDay,
+} from "date-fns";
+import { toast } from "sonner";
 
 type GroupedChats = {
   today: ChatItemData[];
@@ -26,63 +37,133 @@ type GroupedChats = {
   older: ChatItemData[];
 };
 
-// 生成随机历史记录
-const generateMockChats = (): GroupedChats => {
-  const chatTitles = [
-    "如何学习 React",
-    "Next.js 路由配置",
-    "TypeScript 最佳实践",
-    "数据库设计技巧",
-    "API 开发指南",
-    "前端性能优化",
-    "Tailwind CSS 使用",
-    "状态管理方案",
-    "单元测试编写",
-    "代码重构建议",
-    "Git 工作流",
-    "Docker 部署",
-    "安全性考虑",
-    "响应式设计",
-    "组件库开发",
-  ];
+type Chat = {
+  id: string;
+  title: string;
+  createdAt: Date;
+};
 
-  return {
-    today: [
-      { id: "1", title: chatTitles[0] },
-      { id: "2", title: chatTitles[1] },
-      { id: "3", title: chatTitles[2] },
-    ],
-    yesterday: [
-      { id: "4", title: chatTitles[3] },
-      { id: "5", title: chatTitles[4] },
-    ],
-    lastWeek: [
-      { id: "6", title: chatTitles[5] },
-      { id: "7", title: chatTitles[6] },
-      { id: "8", title: chatTitles[7] },
-    ],
-    lastMonth: [
-      { id: "9", title: chatTitles[8] },
-      { id: "10", title: chatTitles[9] },
-      { id: "11", title: chatTitles[10] },
-    ],
-    older: [
-      { id: "12", title: chatTitles[11] },
-      { id: "13", title: chatTitles[12] },
-      { id: "14", title: chatTitles[13] },
-      { id: "15", title: chatTitles[14] },
-    ],
+// 根据时间分组聊天记录
+const groupChatsByDate = (chats: Chat[]): GroupedChats => {
+  const now = new Date();
+  const yesterday = subDays(startOfDay(now), 1);
+  const lastWeekStart = subDays(startOfDay(now), 7);
+  const lastMonthStart = subMonths(startOfDay(now), 1);
+
+  const grouped: GroupedChats = {
+    today: [],
+    yesterday: [],
+    lastWeek: [],
+    lastMonth: [],
+    older: [],
   };
+
+  chats.forEach((chat) => {
+    const chatDate = new Date(chat.createdAt);
+    const chatItem: ChatItemData = {
+      id: chat.id,
+      title: chat.title,
+    };
+
+    if (isToday(chatDate)) {
+      grouped.today.push(chatItem);
+    } else if (isYesterday(chatDate)) {
+      grouped.yesterday.push(chatItem);
+    } else if (
+      isWithinInterval(chatDate, {
+        start: lastWeekStart,
+        end: yesterday,
+      })
+    ) {
+      grouped.lastWeek.push(chatItem);
+    } else if (
+      isWithinInterval(chatDate, {
+        start: lastMonthStart,
+        end: lastWeekStart,
+      })
+    ) {
+      grouped.lastMonth.push(chatItem);
+    } else {
+      grouped.older.push(chatItem);
+    }
+  });
+
+  return grouped;
 };
 
 export function SidebarHistory() {
-  const groupedChats = generateMockChats();
+  const { data: session } = useSession();
+  const pathname = usePathname();
+  const [groupedChats, setGroupedChats] = useState<GroupedChats>({
+    today: [],
+    yesterday: [],
+    lastWeek: [],
+    lastMonth: [],
+    older: [],
+  });
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 从 URL 路径中获取当前活跃的聊天 ID
+  const activeChatId = pathname?.startsWith("/chat/")
+    ? pathname.split("/chat/")[1]
+    : null;
+
+  // 获取聊天历史
+  const fetchChatHistory = async () => {
+    if (!session?.user?.id) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/history?limit=100");
+      if (!response.ok) {
+        throw new Error("Failed to fetch chat history");
+      }
+      const data = await response.json();
+      const grouped = groupChatsByDate(data.chats || []);
+      setGroupedChats(grouped);
+    } catch (error) {
+      console.error("Failed to fetch chat history:", error);
+      toast.error("加载聊天历史失败");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchChatHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id]);
 
   const handleDelete = (chatId: string) => {
     setDeleteId(chatId);
     setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+
+    try {
+      const response = await fetch(`/api/history?id=${deleteId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete chat");
+      }
+
+      toast.success("聊天记录已删除");
+      await fetchChatHistory();
+    } catch (error) {
+      console.error("Failed to delete chat:", error);
+      toast.error("删除失败");
+    } finally {
+      setShowDeleteDialog(false);
+      setDeleteId(null);
+    }
   };
 
   return (
@@ -90,87 +171,93 @@ export function SidebarHistory() {
       <SidebarGroup>
         <SidebarGroupContent>
           <SidebarMenu>
-            <div className="flex flex-col gap-6">
-              {groupedChats.today.length > 0 && (
-                <div>
-                  <div className="px-2 py-1 text-sidebar-foreground/50 text-xs">
-                    Today
+            {isLoading ? (
+              <div className="px-2 py-4 text-center text-sidebar-foreground/50 text-sm">
+                加载中...
+              </div>
+            ) : (
+              <div className="flex flex-col gap-6">
+                {groupedChats.today.length > 0 && (
+                  <div>
+                    <div className="px-2 py-1 text-sidebar-foreground/50 text-xs">
+                      今天
+                    </div>
+                    {groupedChats.today.map((chat) => (
+                      <ChatItem
+                        chat={chat}
+                        isActive={chat.id === activeChatId}
+                        key={chat.id}
+                        onDelete={handleDelete}
+                      />
+                    ))}
                   </div>
-                  {groupedChats.today.map((chat, index) => (
-                    <ChatItem
-                      chat={chat}
-                      isActive={index === 0}
-                      key={chat.id}
-                      onDelete={handleDelete}
-                    />
-                  ))}
-                </div>
-              )}
+                )}
 
-              {groupedChats.yesterday.length > 0 && (
-                <div>
-                  <div className="px-2 py-1 text-sidebar-foreground/50 text-xs">
-                    Yesterday
+                {groupedChats.yesterday.length > 0 && (
+                  <div>
+                    <div className="px-2 py-1 text-sidebar-foreground/50 text-xs">
+                      昨天
+                    </div>
+                    {groupedChats.yesterday.map((chat) => (
+                      <ChatItem
+                        chat={chat}
+                        isActive={chat.id === activeChatId}
+                        key={chat.id}
+                        onDelete={handleDelete}
+                      />
+                    ))}
                   </div>
-                  {groupedChats.yesterday.map((chat) => (
-                    <ChatItem
-                      chat={chat}
-                      isActive={false}
-                      key={chat.id}
-                      onDelete={handleDelete}
-                    />
-                  ))}
-                </div>
-              )}
+                )}
 
-              {groupedChats.lastWeek.length > 0 && (
-                <div>
-                  <div className="px-2 py-1 text-sidebar-foreground/50 text-xs">
-                    Last 7 days
+                {groupedChats.lastWeek.length > 0 && (
+                  <div>
+                    <div className="px-2 py-1 text-sidebar-foreground/50 text-xs">
+                      最近7天
+                    </div>
+                    {groupedChats.lastWeek.map((chat) => (
+                      <ChatItem
+                        chat={chat}
+                        isActive={chat.id === activeChatId}
+                        key={chat.id}
+                        onDelete={handleDelete}
+                      />
+                    ))}
                   </div>
-                  {groupedChats.lastWeek.map((chat) => (
-                    <ChatItem
-                      chat={chat}
-                      isActive={false}
-                      key={chat.id}
-                      onDelete={handleDelete}
-                    />
-                  ))}
-                </div>
-              )}
+                )}
 
-              {groupedChats.lastMonth.length > 0 && (
-                <div>
-                  <div className="px-2 py-1 text-sidebar-foreground/50 text-xs">
-                    Last 30 days
+                {groupedChats.lastMonth.length > 0 && (
+                  <div>
+                    <div className="px-2 py-1 text-sidebar-foreground/50 text-xs">
+                      最近30天
+                    </div>
+                    {groupedChats.lastMonth.map((chat) => (
+                      <ChatItem
+                        chat={chat}
+                        isActive={chat.id === activeChatId}
+                        key={chat.id}
+                        onDelete={handleDelete}
+                      />
+                    ))}
                   </div>
-                  {groupedChats.lastMonth.map((chat) => (
-                    <ChatItem
-                      chat={chat}
-                      isActive={false}
-                      key={chat.id}
-                      onDelete={handleDelete}
-                    />
-                  ))}
-                </div>
-              )}
+                )}
 
-              {groupedChats.older.length > 0 && (
-                <div>
-                  <div className="px-2 py-1 text-sidebar-foreground/50 text-xs">
-                    Older than last month
+                {groupedChats.older.length > 0 && (
+                  <div>
+                    <div className="px-2 py-1 text-sidebar-foreground/50 text-xs">
+                      30天以上
+                    </div>
+                    {groupedChats.older.map((chat) => (
+                      <ChatItem
+                        chat={chat}
+                        isActive={chat.id === activeChatId}
+                        key={chat.id}
+                        onDelete={handleDelete}
+                      />
+                    ))}
                   </div>
-                  {groupedChats.older.map((chat) => (
-                    <ChatItem
-                      chat={chat}
-                      isActive={false}
-                      key={chat.id}
-                      onDelete={handleDelete}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
@@ -178,17 +265,15 @@ export function SidebarHistory() {
       <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogTitle>确定要删除吗？</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your
-              chat and remove it from our servers.
+              这个操作不能撤销。这将永久删除你的
+              聊天记录并从我们的服务器中移除。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => setShowDeleteDialog(false)}>
-              Continue
-            </AlertDialogAction>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>继续</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

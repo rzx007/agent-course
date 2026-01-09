@@ -15,8 +15,10 @@ export default async function AccountPage({
   const { path } = await params;
 
   return (
-    <main className="container p-4 md:p-6">
-      <AccountView path={path} />
+    <main className="w-full h-screen flex grow flex-col items-center  self-center p-4 md:p-6">
+      <section className="container">
+        <AccountView path={path} />
+      </section>
     </main>
   );
 }

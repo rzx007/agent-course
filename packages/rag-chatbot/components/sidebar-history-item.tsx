@@ -1,4 +1,5 @@
 import { memo, useState } from "react";
+import Link from "next/link";
 import { SidebarMenuButton, SidebarMenuItem } from "./ui/sidebar";
 import {
   MoreHorizontal,
@@ -40,8 +41,10 @@ const PureChatItem = ({
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton isActive={isActive}>
-        <span>{chat.title}</span>
+      <SidebarMenuButton asChild isActive={isActive}>
+        <Link href={`/chat/${chat.id}`}>
+          <span>{chat.title}</span>
+        </Link>
       </SidebarMenuButton>
 
       <DropdownMenu modal={true}>
@@ -96,7 +99,7 @@ const PureChatItem = ({
             onSelect={() => onDelete?.(chat.id)}
           >
             <Trash2 className="h-4 w-4" />
-            <span>Delete</span>
+            <span>删除</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

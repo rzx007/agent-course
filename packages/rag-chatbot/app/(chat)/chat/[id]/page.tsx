@@ -1,3 +1,4 @@
+import { ChatHeader } from "@/components/chat-header";
 import { ChatInterface } from "@/components/chat-interface";
 import { getChatById, getMessagesByChatId } from "@/lib/db/queries";
 import { convertToUIMessages } from "@/lib/utils";
@@ -24,7 +25,8 @@ const ChatPage = async ({ params }: ChatPageProps) => {
 
   return (
     <div className="relative size-full h-screen">
-      <div className="flex flex-col h-full">
+      <ChatHeader chatId="" isReadonly={false} />
+      <div className="flex flex-col h-[calc(100%-50px)]">
         <ChatInterface id={chat.id} initialMessages={uiMessages} />
       </div>
     </div>

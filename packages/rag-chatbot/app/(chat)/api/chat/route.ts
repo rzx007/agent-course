@@ -3,7 +3,6 @@ import {
   JsonToSseTransformStream,
   streamText,
   convertToModelMessages,
-  UIMessage,
 } from "ai";
 import { after } from "next/server";
 import {
@@ -11,7 +10,14 @@ import {
   ResumableStreamContext,
 } from "resumable-stream";
 import { createDeepSeek } from "@ai-sdk/deepseek";
-import { saveChat, saveMessages, createStreamId } from "@/lib/db/queries";
+import {
+  saveChat,
+  saveMessages,
+  createStreamId,
+  getChatById,
+  updateChatTitleById,
+} from "@/lib/db/queries";
+import { generateTitleFromUserMessage } from "@/app/(chat)/actions";
 import { generateUUID } from "@/lib/utils";
 import { auth } from "@/lib/auth";
 
@@ -54,8 +60,15 @@ export async function POST(request: Request) {
   }
 
   // 2. 立即创建/检查聊天会话
-  await saveChat({ id, title: "New Chat", userId: session.user.id });
-
+  const chat = await getChatById({ id });
+  if (!chat) {
+    await saveChat({ id, title: "New Chat", userId: session.user.id });
+    // 生成标题
+    const title = await generateTitleFromUserMessage({
+      message: lastMessage,
+    });
+    updateChatTitleById({ chatId: id, title });
+  }
   // 保存用户消息（需要生成新的 UUID）
   await saveMessages({
     messages: [
@@ -99,7 +112,6 @@ export async function POST(request: Request) {
       return response;
     },
   });
-
   const stream = createUIMessageStream({
     execute: async ({ writer: dataStream }) => {
       const result = streamText({
@@ -110,7 +122,20 @@ export async function POST(request: Request) {
       // 【核心】即使客户端刷新/关闭，服务器也要悄悄把话写完存进 Redis
       result.consumeStream();
       // 将 AI SDK 的原始流合并进我们的数据流
-      dataStream.merge(result.toUIMessageStream());
+      dataStream.merge(
+        result.toUIMessageStream({
+          originalMessages: messages,
+          // 自定义消息元数据
+          messageMetadata(options) {
+            const { part } = options;
+            if (part.type === "finish") {
+              return {
+                totalTokens: part.totalUsage.totalTokens,
+              };
+            }
+          },
+        })
+      );
     },
     onFinish: async ({ messages }) => {
       // 结束后持久化到数据库
@@ -142,6 +167,15 @@ export async function POST(request: Request) {
       }
     } catch (error) {
       console.error("Failed to create resumable stream:", error);
+      // 如果是 Redis 连接错误，记录日志但不阻塞请求
+      if (
+        error instanceof Error &&
+        JSON.stringify(error).includes("ECONNREFUSED")
+      ) {
+        console.warn(
+          " > Redis connection refused - streaming without resume capability"
+        );
+      }
     }
   }
 

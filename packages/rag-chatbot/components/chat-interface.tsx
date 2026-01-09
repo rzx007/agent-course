@@ -217,6 +217,11 @@ export const ChatInterface = ({
                               </MessageAction>
                             </MessageActions>
                           )}
+                        {/* {message.metadata && (
+                          <div className="text-xs text-gray-400">
+                            {JSON.stringify(message.metadata)}
+                          </div>
+                        )} */}
                       </Message>
                     );
                   case "reasoning":
@@ -255,7 +260,7 @@ export const ChatInterface = ({
       </Conversation>
       <PromptInput
         onSubmit={handleSubmit}
-        className="max-w-4xl mx-auto mt-4"
+        className="max-w-4xl mx-auto my-4"
         globalDrop
         multiple
       >
@@ -303,7 +308,6 @@ export const ChatInterface = ({
               </PromptInputSelectContent>
             </PromptInputSelect>
           </PromptInputTools>
-          <span>{status}</span>
           <PromptInputSubmit
             disabled={!input && !status}
             status={status}
