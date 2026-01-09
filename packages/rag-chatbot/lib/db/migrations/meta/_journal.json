@@ -36,6 +36,13 @@
       "when": 1767936944571,
       "tag": "0004_narrow_excalibur",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1767961243819,
+      "tag": "0005_square_brood",
+      "breakpoints": true
     }
   ]
 }

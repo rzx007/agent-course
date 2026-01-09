@@ -5,7 +5,8 @@ import { memo } from "react";
 import { useWindowSize } from "usehooks-ts";
 import { SidebarToggle } from "@/components/sidebar-toggle";
 import { Button } from "@/components/ui/button";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useSidebar } from "@/components/animate-ui/components/radix/sidebar";
 import { UserButton } from "@daveyplate/better-auth-ui";
 import { authClient } from "@/lib/auth-client";
@@ -19,6 +20,8 @@ function PureChatHeader({
 }) {
   const router = useRouter();
   const { open } = useSidebar();
+
+  const { setTheme, resolvedTheme } = useTheme();
 
   const { width: windowWidth } = useWindowSize();
 
@@ -41,6 +44,18 @@ function PureChatHeader({
           <span className="md:sr-only">新对话</span>
         </Button>
       )}
+      <Button
+        className="order-3 ml-auto h-8 px-2 md:order-1 md:ml-0 md:h-fit md:px-2"
+        onClick={() => {
+          setTheme(resolvedTheme === "dark" ? "light" : "dark");
+        }}
+        variant="outline"
+      >
+        {resolvedTheme === "dark" ? <Sun /> : <Moon />}
+        <span className="md:sr-only">
+          {resolvedTheme === "dark" ? "Light" : "Dark"}
+        </span>
+      </Button>
       {session.data ? (
         <div className="order-3 md:ml-auto md:flex">
           <UserButton size="icon" />
