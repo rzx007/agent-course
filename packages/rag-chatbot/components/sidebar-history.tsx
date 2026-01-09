@@ -16,7 +16,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/components/animate-ui/components/radix/alert-dialog";
 import { ChatItem, type ChatItemData } from "./sidebar-history-item";
 import { useSession } from "@/lib/auth-client";
 import { isToday, isYesterday } from "date-fns";
