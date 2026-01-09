@@ -44,27 +44,29 @@ function PureChatHeader({
           <span className="md:sr-only">新对话</span>
         </Button>
       )}
-      <Button
-        className="order-3 ml-auto h-8 px-2 md:order-1 md:ml-0 md:h-fit md:px-2"
-        onClick={() => {
-          setTheme(resolvedTheme === "dark" ? "light" : "dark");
-        }}
-        variant="outline"
-      >
-        {resolvedTheme === "dark" ? <Sun /> : <Moon />}
-        <span className="md:sr-only">
-          {resolvedTheme === "dark" ? "Light" : "Dark"}
-        </span>
-      </Button>
-      {session.data ? (
-        <div className="order-3 md:ml-auto md:flex">
-          <UserButton size="icon" />
-        </div>
-      ) : (
-        <Button className="order-3 hidden bg-zinc-900 px-2 text-zinc-50 hover:bg-zinc-800 md:ml-auto md:flex md:h-fit dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200">
-          登录
+      <div className="order-3 md:ml-auto md:flex gap-2">
+        <Button
+          className=" ml-auto h-8 px-2  md:ml-0 md:h-fit md:px-2"
+          onClick={() => {
+            setTheme(resolvedTheme === "dark" ? "light" : "dark");
+          }}
+          variant="ghost"
+        >
+          {resolvedTheme === "dark" ? <Sun /> : <Moon />}
+          <span className="md:sr-only">
+            {resolvedTheme === "dark" ? "Light" : "Dark"}
+          </span>
         </Button>
-      )}
+        {session.data ? (
+          <div className=" md:ml-auto md:flex">
+            <UserButton size="icon" />
+          </div>
+        ) : (
+          <Button className=" hidden bg-zinc-900 px-2 text-zinc-50 hover:bg-zinc-800 md:ml-auto md:flex md:h-fit dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200">
+            登录
+          </Button>
+        )}
+      </div>
     </header>
   );
 }

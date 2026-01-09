@@ -3,6 +3,7 @@ import {
   JsonToSseTransformStream,
   streamText,
   convertToModelMessages,
+  stepCountIs,
 } from "ai";
 import { after } from "next/server";
 import {
@@ -20,6 +21,7 @@ import {
 import { generateTitleFromUserMessage } from "@/app/(chat)/actions";
 import { generateUUID } from "@/lib/utils";
 import { auth } from "@/lib/auth";
+import { getWeather } from "@/lib/ai/tools/get-weather";
 
 // 初始化可恢复流上下文
 let globalStreamContext: ResumableStreamContext | null = null;
@@ -114,43 +116,44 @@ export async function POST(request: Request) {
   });
   const stream = createUIMessageStream({
     execute: async ({ writer: dataStream }) => {
-      dataStream.write({ type: "data-chat-title", data: "", transient: true });
-      const result = streamText({
-        model: deepseek.chat("mimo-v2-flash"),
-        system: "你是rzx训练出来的大语言模型",
-        messages: await convertToModelMessages(messages),
-      });
-      // 【核心】即使客户端刷新/关闭，服务器也要悄悄把话写完存进 Redis
-      result.consumeStream();
-      // 将 AI SDK 的原始流合并进我们的数据流
-      dataStream.merge(
-        result.toUIMessageStream({
-          originalMessages: messages,
-          // 自定义消息元数据
-          messageMetadata(options) {
-            const { part } = options;
-            if (part.type === "finish") {
-              return {
-                totalTokens: part.totalUsage.totalTokens,
-              };
-            }
-          },
-        })
-      );
+      try {
+        dataStream.write({ type: "data-chat-title", data: "", transient: true });
+        const result = streamText({
+          model: deepseek.chat("mimo-v2-flash"),
+          system: "你是rzx训练出来的大语言模型",
+          messages: await convertToModelMessages(messages),
+          tools: {getWeather},
+          stopWhen: stepCountIs(5),
+        });
+        // 【核心】即使客户端刷新/关闭，服务器也要悄悄把话写完存进 Redis
+        result.consumeStream();
+        // 将 AI SDK 的原始流合并进我们的数据流
+        dataStream.merge(
+          result.toUIMessageStream({
+            originalMessages: messages,
+            // 自定义消息元数据
+            messageMetadata(options) {
+              const { part } = options;
+              if (part.type === "finish") {
+                return {
+                  totalTokens: part.totalUsage.totalTokens,
+                };
+              }
+            },
+          })
+        );
+      } catch (error) {
+        console.error("Error in stream execution:", error);
+        // 写入错误信息到流中
+        dataStream.write({
+          type: "error",
+          errorText: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
     },
-    onFinish: async ({ messages }) => {
-      // 结束后持久化到数据库
-      await saveMessages({
-        messages: messages.map((m) => ({
-          id: generateUUID(), // 总是生成新的 UUID，因为 m.id 是 AI SDK 的短 ID
-          chatId: id,
-          role: m.role,
-          parts: m.parts,
-          attachments: [],
-          createdAt: new Date(),
-        })),
-      });
-    },
+    // 【关键修复】移除 onFinish 回调，因为它与 needsApproval: true 的工具冲突
+    // 参考: https://github.com/vercel/ai/issues/10169
+    // 消息保存改由客户端 onFinish 回调处理，或者使用数据库视图/触发器
   });
 
   // 4. 将流包裹在可恢复上下文中并返回

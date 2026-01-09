@@ -51,21 +51,15 @@ import {
   ReasoningTrigger,
 } from "@/components/ai-elements/reasoning";
 import { Loader } from "@/components/ai-elements/loader";
-import { DefaultChatTransport } from "ai";
+import {
+  DefaultChatTransport,
+  lastAssistantMessageIsCompleteWithApprovalResponses,
+} from "ai";
 import { useSearchParams } from "next/navigation";
 import { ChatMessage } from "@/lib/types";
 import { useRefreshChatHistory } from "@/hooks/use-chat-history";
-
-const models = [
-  {
-    name: "Xiaomi MIMO",
-    value: "xiaomi/mimo",
-  },
-  {
-    name: "Deepseek R1",
-    value: "deepseek/deepseek-r1",
-  },
-];
+import { chatModels } from "@/lib/ai/models";
+import { Tool, ToolHeader, ToolContent, ToolInput } from "./ai-elements/tool";
 
 interface ChatInterfaceProps {
   /**
@@ -93,16 +87,24 @@ export const ChatInterface = ({
   greetingComponent,
 }: ChatInterfaceProps) => {
   const [input, setInput] = useState("");
-  const [model, setModel] = useState<string>(models[0].value);
+  const [model, setModel] = useState<string>(chatModels[0].id);
   const [webSearch, setWebSearch] = useState(false);
 
   // 获取刷新聊天历史的函数
   const refreshChatHistory = useRefreshChatHistory();
 
-  const { messages, sendMessage, status, regenerate, stop } = useChat({
+  const {
+    messages,
+    sendMessage,
+    status,
+    regenerate,
+    stop,
+    addToolApprovalResponse,
+  } = useChat({
     id,
     messages: initialMessages,
     resume: true,
+    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
     transport: new DefaultChatTransport({
       api: "/api/chat",
       // 配置重链接地址
@@ -120,6 +122,31 @@ export const ChatInterface = ({
         // 更新历史列表 - 使用 React Query 刷新
         console.log("Updated chat title:", part.data);
         refreshChatHistory();
+      }
+    },
+    // 【方案2】在客户端 onFinish 中保存消息
+    onFinish: async ({ messages: finishedMessages }) => {
+      if (!id) return;
+      
+      // 只保存 assistant 消息(用户消息在服务端已经保存)
+      const assistantMessages = finishedMessages.filter(
+        (msg) => msg.role === "assistant"
+      );
+      
+      if (assistantMessages.length > 0) {
+        try {
+          await fetch("/api/chat/messages", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chatId: id,
+              messages: assistantMessages,
+            }),
+          });
+          console.log("✅ 消息已保存到数据库");
+        } catch (error) {
+          console.error("❌ 保存消息失败:", error);
+        }
       }
     },
   });
@@ -256,6 +283,129 @@ export const ChatInterface = ({
                         <MessageAttachment data={part} key={part.url} />
                       </MessageAttachments>
                     );
+                  case "tool-getWeather":
+                    const { toolCallId, state } = part;
+                    const approvalId = (part as { approval?: { id: string } })
+                      .approval?.id;
+
+                    const widthClass = "w-[min(100%,450px)]";
+
+                    // 工具输出可用时的视图(可以指定输出格式)
+                    if (state === "output-available") {
+                      const weatherData = part.output as {
+                        cityName?: string;
+                        current?: { temperature_2m?: number };
+                        elevation?: number;
+                        timezone?: string;
+                      };
+                      const city = (part.input as { city: string }).city;
+                      
+                      return (
+                        <div key={part.toolCallId} className="mb-4">
+                          <div className="rounded-lg border bg-card p-4">
+                            <h3 className="font-semibold mb-2">
+                              🌡️ {weatherData.cityName || city} 的天气
+                            </h3>
+                            <div className="space-y-2 text-sm">
+                              <p>
+                                <span className="text-muted-foreground">当前温度:</span>{" "}
+                                <span className="font-medium">
+                                  {weatherData.current?.temperature_2m}°C
+                                </span>
+                              </p>
+                              <p>
+                                <span className="text-muted-foreground">海拔:</span>{" "}
+                                {weatherData.elevation}m
+                              </p>
+                              <p>
+                                <span className="text-muted-foreground">时区:</span>{" "}
+                                {weatherData.timezone}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // 拒绝调用工具时的视图
+                    const isDenied =
+                      state === "output-denied" ||
+                      (state === "approval-responded" &&
+                        (part as { approval?: { approved?: boolean } }).approval
+                          ?.approved === false);
+                    if (isDenied) {
+                      return (
+                        <div className={widthClass} key={toolCallId}>
+                          <Tool className="w-full" defaultOpen={true}>
+                            <ToolHeader
+                              state="output-denied"
+                              type="tool-getWeather"
+                            />
+                            <ToolContent>
+                              <div className="px-4 py-3 text-muted-foreground text-sm">
+                                拒绝天气查询
+                              </div>
+                            </ToolContent>
+                          </Tool>
+                        </div>
+                      );
+                    }
+                    // 已经审批，等待工具输出前的视图
+                    if (state === "approval-responded") {
+                      return (
+                        <div className={widthClass} key={toolCallId}>
+                          <Tool className="w-full" defaultOpen={true}>
+                            <ToolHeader state={state} type="tool-getWeather" />
+                            <ToolContent>
+                              <ToolInput input={part.input} />
+                            </ToolContent>
+                          </Tool>
+                        </div>
+                      );
+                    }
+                    // 等待审批的视图
+                    return (
+                      <div className={widthClass} key={toolCallId}>
+                        <Tool className="w-full" defaultOpen={true}>
+                          <ToolHeader state={state} type="tool-getWeather" />
+                          <ToolContent>
+                            {(state === "input-available" ||
+                              state === "approval-requested") && (
+                              <ToolInput input={part.input} />
+                            )}
+                            {state === "approval-requested" && approvalId && (
+                              <div className="flex items-center justify-end gap-2 border-t px-4 py-3">
+                                <button
+                                  className="rounded-md px-3 py-1.5 text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground"
+                                  onClick={() => {
+                                    addToolApprovalResponse({
+                                      id: approvalId,
+                                      approved: false,
+                                      reason: "User denied weather lookup",
+                                    });
+                                  }}
+                                  type="button"
+                                >
+                                  拒绝
+                                </button>
+                                <button
+                                  className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground text-sm transition-colors hover:bg-primary/90"
+                                  onClick={() => {
+                                    addToolApprovalResponse({
+                                      id: approvalId,
+                                      approved: true,
+                                    });
+                                  }}
+                                  type="button"
+                                >
+                                  允许
+                                </button>
+                              </div>
+                            )}
+                          </ToolContent>
+                        </Tool>
+                      </div>
+                    );
                   default:
                     return null;
                 }
@@ -308,8 +458,8 @@ export const ChatInterface = ({
                 <PromptInputSelectValue />
               </PromptInputSelectTrigger>
               <PromptInputSelectContent>
-                {models.map((model) => (
-                  <PromptInputSelectItem key={model.value} value={model.value}>
+                {chatModels.map((model) => (
+                  <PromptInputSelectItem key={model.id} value={model.id}>
                     {model.name}
                   </PromptInputSelectItem>
                 ))}
