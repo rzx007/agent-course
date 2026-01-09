@@ -114,6 +114,7 @@ export async function POST(request: Request) {
   });
   const stream = createUIMessageStream({
     execute: async ({ writer: dataStream }) => {
+      dataStream.write({ type: "data-chat-title", data: "", transient: true });
       const result = streamText({
         model: deepseek.chat("mimo-v2-flash"),
         system: "你是rzx训练出来的大语言模型",

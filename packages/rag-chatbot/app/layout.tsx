@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Providers } from "./providers";
+import { QueryProviders } from "./tanstack-query-provider";
+import { Providers } from "./auth-ui-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,7 +29,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Providers>{children}</Providers>
+        <QueryProviders>
+          <Providers>{children}</Providers>
+        </QueryProviders>
       </body>
     </html>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import {
   SidebarGroup,
@@ -28,6 +28,11 @@ import {
   startOfDay,
 } from "date-fns";
 import { toast } from "sonner";
+import {
+  useChatHistory,
+  useDeleteChat,
+  type Chat,
+} from "@/hooks/use-chat-history";
 
 type GroupedChats = {
   today: ChatItemData[];
@@ -35,12 +40,6 @@ type GroupedChats = {
   lastWeek: ChatItemData[];
   lastMonth: ChatItemData[];
   older: ChatItemData[];
-};
-
-type Chat = {
-  id: string;
-  title: string;
-  createdAt: Date;
 };
 
 // 根据时间分组聊天记录
@@ -94,49 +93,38 @@ const groupChatsByDate = (chats: Chat[]): GroupedChats => {
 export function SidebarHistory() {
   const { data: session } = useSession();
   const pathname = usePathname();
-  const [groupedChats, setGroupedChats] = useState<GroupedChats>({
-    today: [],
-    yesterday: [],
-    lastWeek: [],
-    lastMonth: [],
-    older: [],
-  });
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   // 从 URL 路径中获取当前活跃的聊天 ID
   const activeChatId = pathname?.startsWith("/chat/")
     ? pathname.split("/chat/")[1]
     : null;
 
-  // 获取聊天历史
-  const fetchChatHistory = async () => {
-    if (!session?.user?.id) {
-      setIsLoading(false);
-      return;
-    }
+  // 使用 React Query 获取聊天历史
+  const { data, isLoading, error } = useChatHistory(100);
 
-    try {
-      const response = await fetch("/api/history?limit=100");
-      if (!response.ok) {
-        throw new Error("Failed to fetch chat history");
-      }
-      const data = await response.json();
-      const grouped = groupChatsByDate(data.chats || []);
-      setGroupedChats(grouped);
-    } catch (error) {
-      console.error("Failed to fetch chat history:", error);
-      toast.error("加载聊天历史失败");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // 使用 React Query 删除聊天
+  const deleteChatMutation = useDeleteChat();
 
-  useEffect(() => {
-    fetchChatHistory();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user?.id]);
+  // 使用 useMemo 计算分组聊天，避免不必要的重新计算
+  const groupedChats = useMemo(() => {
+    if (!data?.chats) {
+      return {
+        today: [],
+        yesterday: [],
+        lastWeek: [],
+        lastMonth: [],
+        older: [],
+      };
+    }
+    return groupChatsByDate(data.chats);
+  }, [data?.chats]);
+
+  // 显示错误提示
+  if (error) {
+    toast.error("加载聊天历史失败");
+  }
 
   const handleDelete = (chatId: string) => {
     setDeleteId(chatId);
@@ -147,16 +135,8 @@ export function SidebarHistory() {
     if (!deleteId) return;
 
     try {
-      const response = await fetch(`/api/history?id=${deleteId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete chat");
-      }
-
+      await deleteChatMutation.mutateAsync(deleteId);
       toast.success("聊天记录已删除");
-      await fetchChatHistory();
     } catch (error) {
       console.error("Failed to delete chat:", error);
       toast.error("删除失败");
@@ -171,7 +151,7 @@ export function SidebarHistory() {
       <SidebarGroup>
         <SidebarGroupContent>
           <SidebarMenu>
-            {isLoading ? (
+            {!session?.user?.id || isLoading ? (
               <div className="px-2 py-4 text-center text-sidebar-foreground/50 text-sm">
                 加载中...
               </div>

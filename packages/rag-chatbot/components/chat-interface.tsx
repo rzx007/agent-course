@@ -54,6 +54,7 @@ import { Loader } from "@/components/ai-elements/loader";
 import { DefaultChatTransport } from "ai";
 import { useSearchParams } from "next/navigation";
 import { ChatMessage } from "@/lib/types";
+import { useRefreshChatHistory } from "@/hooks/use-chat-history";
 
 const models = [
   {
@@ -95,6 +96,9 @@ export const ChatInterface = ({
   const [model, setModel] = useState<string>(models[0].value);
   const [webSearch, setWebSearch] = useState(false);
 
+  // 获取刷新聊天历史的函数
+  const refreshChatHistory = useRefreshChatHistory();
+
   const { messages, sendMessage, status, regenerate, stop } = useChat({
     id,
     messages: initialMessages,
@@ -112,6 +116,10 @@ export const ChatInterface = ({
       if (part.type === "data-appendMessage") {
         // AI SDK 内部会自动处理这种同步逻辑
         console.log("Restored complete message from DB");
+      } else if (part.type === "data-chat-title") {
+        // 更新历史列表 - 使用 React Query 刷新
+        console.log("Updated chat title:", part.data);
+        refreshChatHistory();
       }
     },
   });
