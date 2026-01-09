@@ -6,7 +6,7 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
-} from "@/components/ui/sidebar";
+} from "@/components/animate-ui/components/radix/sidebar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,14 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ChatItem, type ChatItemData } from "./sidebar-history-item";
 import { useSession } from "@/lib/auth-client";
-import {
-  isToday,
-  isYesterday,
-  isWithinInterval,
-  subDays,
-  subMonths,
-  startOfDay,
-} from "date-fns";
+import { isToday, isYesterday } from "date-fns";
 import { toast } from "sonner";
 import {
   useChatHistory,
@@ -37,23 +30,14 @@ import {
 type GroupedChats = {
   today: ChatItemData[];
   yesterday: ChatItemData[];
-  lastWeek: ChatItemData[];
-  lastMonth: ChatItemData[];
   older: ChatItemData[];
 };
 
 // 根据时间分组聊天记录
 const groupChatsByDate = (chats: Chat[]): GroupedChats => {
-  const now = new Date();
-  const yesterday = subDays(startOfDay(now), 1);
-  const lastWeekStart = subDays(startOfDay(now), 7);
-  const lastMonthStart = subMonths(startOfDay(now), 1);
-
   const grouped: GroupedChats = {
     today: [],
     yesterday: [],
-    lastWeek: [],
-    lastMonth: [],
     older: [],
   };
 
@@ -68,20 +52,6 @@ const groupChatsByDate = (chats: Chat[]): GroupedChats => {
       grouped.today.push(chatItem);
     } else if (isYesterday(chatDate)) {
       grouped.yesterday.push(chatItem);
-    } else if (
-      isWithinInterval(chatDate, {
-        start: lastWeekStart,
-        end: yesterday,
-      })
-    ) {
-      grouped.lastWeek.push(chatItem);
-    } else if (
-      isWithinInterval(chatDate, {
-        start: lastMonthStart,
-        end: lastWeekStart,
-      })
-    ) {
-      grouped.lastMonth.push(chatItem);
     } else {
       grouped.older.push(chatItem);
     }
@@ -113,8 +83,6 @@ export function SidebarHistory() {
       return {
         today: [],
         yesterday: [],
-        lastWeek: [],
-        lastMonth: [],
         older: [],
       };
     }
@@ -189,42 +157,10 @@ export function SidebarHistory() {
                   </div>
                 )}
 
-                {groupedChats.lastWeek.length > 0 && (
-                  <div>
-                    <div className="px-2 py-1 text-sidebar-foreground/50 text-xs">
-                      最近7天
-                    </div>
-                    {groupedChats.lastWeek.map((chat) => (
-                      <ChatItem
-                        chat={chat}
-                        isActive={chat.id === activeChatId}
-                        key={chat.id}
-                        onDelete={handleDelete}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {groupedChats.lastMonth.length > 0 && (
-                  <div>
-                    <div className="px-2 py-1 text-sidebar-foreground/50 text-xs">
-                      最近30天
-                    </div>
-                    {groupedChats.lastMonth.map((chat) => (
-                      <ChatItem
-                        chat={chat}
-                        isActive={chat.id === activeChatId}
-                        key={chat.id}
-                        onDelete={handleDelete}
-                      />
-                    ))}
-                  </div>
-                )}
-
                 {groupedChats.older.length > 0 && (
                   <div>
                     <div className="px-2 py-1 text-sidebar-foreground/50 text-xs">
-                      30天以上
+                      更早
                     </div>
                     {groupedChats.older.map((chat) => (
                       <ChatItem

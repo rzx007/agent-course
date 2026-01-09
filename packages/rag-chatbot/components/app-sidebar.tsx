@@ -10,7 +10,7 @@ import {
   SidebarContent,
   SidebarHeader,
   SidebarMenu,
-} from "@/components/ui/sidebar";
+} from "@/components/animate-ui/components/radix/sidebar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -87,16 +87,15 @@ export function AppSidebar() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete all chats?</AlertDialogTitle>
+            <AlertDialogTitle>删除所有的对话?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete all
-              your chats and remove them from our servers.
+              这个操作不能撤销。这将永久删除所有的对话并从我们的服务器中移除。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction onClick={() => setShowDeleteAllDialog(false)}>
-              Delete All
+              删除所有
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

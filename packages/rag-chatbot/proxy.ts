@@ -19,5 +19,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard"], // Specify the routes the middleware applies to
+  // Matcher ignoring `/_next/` and `/api/`
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };

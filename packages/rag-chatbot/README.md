@@ -27,9 +27,11 @@
 ### 认证系统
 
 - **Better Auth 1.4.10** - 现代化认证方案
+- **Better Auth UI** - 开箱即用的认证界面组件
 - 支持邮箱密码登录
 - 支持 GitHub OAuth
 - 用户名插件支持
+- 可自定义认证页面
 
 ### UI 组件
 
@@ -174,14 +176,59 @@ rag-chatbot/
 
 ### 2. 用户认证
 
+#### Better Auth UI（开箱即用）
+
+Better Auth UI 提供了完整的认证界面组件，可以快速搭建登录、注册等页面：
+
+- **预构建组件**：登录表单、注册表单、密码重置等
+- **主题支持**：自动适配深色/浅色模式
+- **国际化**：支持中文本地化
+- **响应式设计**：适配移动端和桌面端
+
+#### 自定义认证页面
+
+如果需要更灵活的控制，可以使用 `authClient` 提供的方法自定义页面：
+
+```typescript
+import { authClient } from "@/lib/auth-client";
+
+// 邮箱密码登录
+await authClient.signIn.email({
+  email: "user@example.com",
+  password: "password123",
+});
+
+// 用户名登录
+await authClient.signIn.username({
+  username: "myusername",
+  password: "password123",
+});
+
+// OAuth 登录
+await authClient.signIn.social({
+  provider: "github",
+});
+
+// 注册新用户
+await authClient.signUp.email({
+  email: "user@example.com",
+  password: "password123",
+  name: "John Doe",
+});
+```
+
+**认证功能特性：**
+
 - **邮箱密码登录**：传统认证方式
 - **GitHub OAuth**：社交登录
 - **会话管理**：基于 Better Auth
 - **用户名支持**：可使用用户名登录
+- **密码重置**：支持邮件找回密码
+- **会话持久化**：自动维护登录状态
 
 ### 3. 聊天历史
 
-- **自动分组**：按时间分组（今天、昨天、最近7天、最近30天、30天以上）
+- **自动分组**：按时间分组（今天、昨天、更早）
 - **实时更新**：使用 React Hooks 自动刷新
 - **删除功能**：支持单个聊天删除
 - **分页加载**：支持大量历史记录

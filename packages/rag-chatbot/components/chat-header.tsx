@@ -6,7 +6,7 @@ import { useWindowSize } from "usehooks-ts";
 import { SidebarToggle } from "@/components/sidebar-toggle";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
-import { useSidebar } from "./ui/sidebar";
+import { useSidebar } from "@/components/animate-ui/components/radix/sidebar";
 import { UserButton } from "@daveyplate/better-auth-ui";
 import { authClient } from "@/lib/auth-client";
 

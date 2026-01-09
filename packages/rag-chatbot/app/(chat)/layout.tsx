@@ -2,7 +2,10 @@ import { Suspense } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import {
+  SidebarInset,
+  SidebarProvider,
+} from "@/components/animate-ui/components/radix/sidebar";
 import { auth } from "@/lib/auth";
 
 export default async function Layout({

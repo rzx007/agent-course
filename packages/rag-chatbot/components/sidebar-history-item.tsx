@@ -1,6 +1,9 @@
 import { memo, useState } from "react";
 import Link from "next/link";
-import { SidebarMenuButton, SidebarMenuItem } from "./ui/sidebar";
+import {
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/animate-ui/components/radix/sidebar";
 import {
   MoreHorizontal,
   Share2,
@@ -19,7 +22,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { SidebarMenuAction } from "./ui/sidebar";
+import { SidebarMenuAction } from "@/components/animate-ui/components/radix/sidebar";
 
 export type ChatItemData = {
   id: string;
