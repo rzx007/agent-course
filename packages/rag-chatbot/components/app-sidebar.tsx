@@ -23,13 +23,13 @@ import {
 } from "./ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
-export function AppSidebar() {
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
   const router = useRouter();
 
   return (
     <>
-      <Sidebar className="group-data-[side=left]:border-r-0">
+      <Sidebar className="group-data-[side=left]:border-r-0" {...props}>
         <SidebarHeader>
           <SidebarMenu>
             <div className="flex flex-row items-center justify-between">
