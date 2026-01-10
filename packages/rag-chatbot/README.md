@@ -15,8 +15,7 @@
 
 - **AI SDK 6.0.3** - Vercel AI SDK
 - **@ai-sdk/deepseek** - DeepSeek 模型支持
-- **@ai-sdk/openai** - OpenAI 兼容接口
-- **小蜜米莫 AI 平台** - 提供 mimo-v2-flash 模型
+- **小米MIMO 大语言模型** - 提供 mimo-v2-flash 模型
 
 ### 数据库
 
