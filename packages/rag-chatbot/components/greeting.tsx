@@ -22,7 +22,7 @@ export const Greeting = () => {
           使用 Nextjs + Shadcn/ui + AI SDK 支持会话流恢复的聊天机器人模板。
         </motion.p>
         <motion.p {...variants} transition={{ delay: 1 }}>
-          支持天气查询、新闻查询、热榜查询。
+          支持<span className="font-bold">工具调用</span>, 内置天气查询、新闻查询、热榜查询。
         </motion.p>
         <motion.p {...variants} transition={{ delay: 1.5 }}>
           在客户端使用 &quot;useChat&quot; 钩子，以创建无缝的聊天体验。

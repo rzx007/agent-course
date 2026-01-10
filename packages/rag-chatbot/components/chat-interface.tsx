@@ -36,7 +36,7 @@ import {
 } from "ai";
 import { useSearchParams } from "next/navigation";
 import { ChatMessage } from "@/lib/types";
-import { useRefreshChatHistory } from "@/hooks/use-chat-history";
+import { useRefreshChatHistory, useDeleteMessage } from "@/hooks/use-chat-history";
 import { chatModels } from "@/lib/ai/models";
 import { Weather, WeatherAtLocation } from "./weather";
 import { HotNews, HotNewsData } from "./hot-news";
@@ -77,6 +77,8 @@ export const ChatInterface = ({
 
   // 获取刷新聊天历史的函数
   const refreshChatHistory = useRefreshChatHistory();
+  // 删除消息的 mutation
+  const deleteMessageMutation = useDeleteMessage();
 
   const {
     messages,
@@ -154,6 +156,47 @@ export const ChatInterface = ({
     setInput("");
   };
 
+  // 处理重新生成：删除数据库中的 assistant 消息和对应的 user 消息
+  const handleRegenerate = async () => {
+    // 找到最后一条 assistant 消息
+    const lastAssistantIndex = [...messages]
+      .reverse()
+      .findIndex((msg) => msg.role === "assistant");
+    
+    if (lastAssistantIndex === -1) {
+      regenerate();
+      return;
+    }
+
+    const actualIndex = messages.length - 1 - lastAssistantIndex;
+    const lastAssistantMessage = messages[actualIndex];
+    // 找到对应的 user 消息（通常在 assistant 消息的前一条）
+    const correspondingUserMessage = messages[actualIndex - 1];
+
+    try {
+      // 删除 assistant 消息
+      await deleteMessageMutation.mutateAsync({
+        messageId: lastAssistantMessage.id,
+        chatId: id,
+      });
+      console.log("Deleted assistant message:", lastAssistantMessage.id);
+
+      // 如果存在对应的 user 消息，也删除它
+      if (correspondingUserMessage && correspondingUserMessage.role === "user") {
+        await deleteMessageMutation.mutateAsync({
+          messageId: correspondingUserMessage.id,
+          chatId: id,
+        });
+        console.log("Deleted user message:", correspondingUserMessage.id);
+      }
+    } catch (error) {
+      console.error("Failed to delete messages:", error);
+    }
+
+    // 调用原始的 regenerate 函数
+    regenerate();
+  };
+
   return (
     <div className="flex flex-col h-full">
       {showGreeting && messages.length === 0 && greetingComponent}
@@ -173,7 +216,7 @@ export const ChatInterface = ({
                           index === messages.length - 1 && (
                             <MessageActions>
                               <MessageAction
-                                onClick={() => regenerate()}
+                                onClick={() => handleRegenerate()}
                                 label="Retry"
                               >
                                 <RefreshCcwIcon className="size-3" />

@@ -1,15 +1,21 @@
-import { auth } from "@/lib/auth";
-import { saveMessages } from "@/lib/db/queries";
-import { generateUUID } from "@/lib/utils";
 import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { deleteMessageById, getChatById } from "@/lib/db/queries";
 
-/**
- * 保存聊天消息的独立端点
- * 用于在流完成后保存 assistant 消息
- */
-export async function POST(request: Request) {
+export async function DELETE(request: Request) {
   try {
-    // 1. 验证用户身份
+    const { searchParams } = new URL(request.url);
+    const messageId = searchParams.get("id");
+    const chatId = searchParams.get("chatId");
+
+    if (!messageId || !chatId) {
+      return NextResponse.json(
+        { error: "Message ID and Chat ID are required" },
+        { status: 400 }
+      );
+    }
+
+    // 验证用户权限
     const session = await auth.api.getSession({
       headers: request.headers,
     });
@@ -18,33 +24,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 2. 获取请求数据
-    const { chatId, messages } = await request.json();
-
-    if (!chatId || !messages || !Array.isArray(messages)) {
+    // 验证聊天归属
+    const chat = await getChatById({ id: chatId });
+    if (!chat || chat.userId !== session.user.id) {
       return NextResponse.json(
-        { error: "Invalid request body" },
-        { status: 400 }
+        { error: "Chat not found or unauthorized" },
+        { status: 404 }
       );
     }
 
-    // 3. 保存消息到数据库
-    await saveMessages({
-      messages: messages.map((m) => ({
-        id: generateUUID(),
-        chatId,
-        role: m.role,
-        parts: m.parts,
-        attachments: m.attachments || [],
-        createdAt: new Date(),
-      })),
-    });
+    // 删除消息
+    await deleteMessageById({ id: messageId });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to save messages:", error);
+    console.error("Failed to delete message:", error);
     return NextResponse.json(
-      { error: "Failed to save messages" },
+      { error: "Failed to delete message" },
       { status: 500 }
     );
   }

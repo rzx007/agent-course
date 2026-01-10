@@ -67,6 +67,34 @@ export function useDeleteChat() {
 }
 
 /**
+ * 删除消息
+ */
+export function useDeleteMessage() {
+  return useMutation({
+    mutationFn: async ({
+      messageId,
+      chatId,
+    }: {
+      messageId: string;
+      chatId: string;
+    }) => {
+      const response = await fetch(
+        `/api/chat/messages?id=${messageId}&chatId=${chatId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete message");
+      }
+
+      return response.json();
+    },
+  });
+}
+
+/**
  * 手动刷新聊天历史
  */
 export function useRefreshChatHistory() {

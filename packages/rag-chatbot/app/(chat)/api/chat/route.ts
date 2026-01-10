@@ -26,6 +26,7 @@ import { getWeather } from "@/lib/ai/tools/get-weather";
 import { getHotNews } from "@/lib/ai/tools/get-hotnews";
 import { getDailyNewsImage } from "@/lib/ai/tools/get-daily-news-image";
 import { getRandomImage } from "@/lib/ai/tools/get-random-image";
+import { systemPrompt } from "@/lib/ai/prompts";
 
 // 初始化可恢复流上下文
 let globalStreamContext: ResumableStreamContext | null = null;
@@ -128,7 +129,7 @@ export async function POST(request: Request) {
         });
         const result = streamText({
           model: deepseek.chat("mimo-v2-flash"),
-          system: "你是rzx训练出来的大语言模型",
+          system: systemPrompt,
           messages: await convertToModelMessages(messages),
           tools: { getWeather, getHotNews, getDailyNewsImage, getRandomImage },
           stopWhen: stepCountIs(5),
