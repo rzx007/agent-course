@@ -1,11 +1,11 @@
-import { ReactNode } from "react";
+import { ReactNode, memo } from "react";
 import { ToolUIPart } from "ai";
 import { Tool, ToolHeader, ToolContent, ToolInput } from "./ai-elements/tool";
 
 /**
- * 工具渲染配置接口
+ * 工具渲染器组件属性
  */
-export interface ToolRenderConfig<TOutput = unknown> {
+export interface ToolRendererProps<TOutput = unknown> {
   /** 工具 UI 部分（包含所有基础信息） */
   part: ToolUIPart;
   /** 添加工具审批响应的函数 */
@@ -23,20 +23,17 @@ export interface ToolRenderConfig<TOutput = unknown> {
 }
 
 /**
- * 通用的工具渲染函数
+ * 通用的工具渲染组件
  * 适用于所有需要人工审批的工具
+ * 使用 memo 优化性能，避免不必要的重渲染
  */
-export function renderToolWithApproval<TOutput = unknown>(
-  config: ToolRenderConfig<TOutput>
-): ReactNode {
-  const {
-    part,
-    addToolApprovalResponse,
-    renderOutput,
-    deniedMessage = "操作已被拒绝",
-    className = "w-[min(100%,450px)]",
-  } = config;
-
+export const ToolRenderer = memo(function ToolRenderer<TOutput = unknown>({
+  part,
+  addToolApprovalResponse,
+  renderOutput,
+  deniedMessage = "操作已被拒绝",
+  className = "w-[min(100%,450px)]",
+}: ToolRendererProps<TOutput>) {
   const { type: toolType, state, toolCallId, input, output } = part;
   const approval = (part as { approval?: { id: string; approved?: boolean; reason?: string } }).approval;
   const approvalId = approval?.id;
@@ -44,7 +41,7 @@ export function renderToolWithApproval<TOutput = unknown>(
   // 1. 工具输出可用时的视图（自定义渲染）
   if (state === "output-available" && output && renderOutput) {
     return (
-      <div className={className} key={toolCallId}>
+      <div className={className}>
         {renderOutput(output as TOutput)}
       </div>
     );
@@ -57,7 +54,7 @@ export function renderToolWithApproval<TOutput = unknown>(
 
   if (isDenied) {
     return (
-      <div className={className} key={toolCallId}>
+      <div className={className}>
         <Tool className="w-full" defaultOpen={true}>
           <ToolHeader state="output-denied" type={toolType} />
           <ToolContent>
@@ -73,7 +70,7 @@ export function renderToolWithApproval<TOutput = unknown>(
   // 3. 已经审批，等待工具输出前的视图
   if (state === "approval-responded") {
     return (
-      <div className={className} key={toolCallId}>
+      <div className={className}>
         <Tool className="w-full" defaultOpen={true}>
           <ToolHeader state={state} type={toolType} />
           <ToolContent>
@@ -86,7 +83,7 @@ export function renderToolWithApproval<TOutput = unknown>(
 
   // 4. 等待审批的视图
   return (
-    <div className={className} key={toolCallId}>
+    <div className={className}>
       <Tool className="w-full" defaultOpen={true}>
         <ToolHeader state={state} type={toolType} />
         <ToolContent>
@@ -126,4 +123,4 @@ export function renderToolWithApproval<TOutput = unknown>(
       </Tool>
     </div>
   );
-}
+}) as <TOutput = unknown>(props: ToolRendererProps<TOutput>) => ReactNode;

@@ -112,9 +112,9 @@ export const HotNews = ({ hotNewsData }: HotNewsProps) => {
           >
             {/* 排名 */}
             <div
-              className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded text-xs font-bold ${
+              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded text-xs font-bold ${
                 index < 3
-                  ? "bg-gradient-to-br from-orange-500 to-red-500 text-white"
+                  ? "bg-linear-to-br from-orange-500 to-red-500 text-white"
                   : "bg-muted text-muted-foreground"
               }`}
             >
@@ -131,7 +131,7 @@ export const HotNews = ({ hotNewsData }: HotNewsProps) => {
                   className="inline-flex items-center gap-1 text-sm font-medium transition-colors hover:text-primary"
                 >
                   <span className="line-clamp-2">{item.title}</span>
-                  <ExternalLinkIcon className="size-3 flex-shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
+                  <ExternalLinkIcon className="size-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
                 </a>
               ) : (
                 <p className="text-sm font-medium line-clamp-2">{item.title}</p>

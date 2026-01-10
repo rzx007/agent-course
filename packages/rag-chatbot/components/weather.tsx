@@ -285,16 +285,19 @@ export function Weather({
   weatherAtLocation?: WeatherAtLocation;
 }) {
   const currentHigh = Math.max(
-    ...weatherAtLocation.hourly.temperature_2m.slice(0, 24)
+    ...(weatherAtLocation.hourly?.temperature_2m?.slice(0, 24) ?? [0])
   );
   const currentLow = Math.min(
-    ...weatherAtLocation.hourly.temperature_2m.slice(0, 24)
+    ...(weatherAtLocation.hourly?.temperature_2m?.slice(0, 24) ?? [0])
   );
 
-  const isDay = isWithinInterval(new Date(weatherAtLocation.current.time), {
-    start: new Date(weatherAtLocation.daily.sunrise[0]),
-    end: new Date(weatherAtLocation.daily.sunset[0]),
-  });
+  const isDay = isWithinInterval(
+    new Date(weatherAtLocation.current?.time ?? new Date()),
+    {
+      start: new Date(weatherAtLocation.daily?.sunrise?.[0] ?? new Date()),
+      end: new Date(weatherAtLocation.daily?.sunset?.[0] ?? new Date()),
+    }
+  );
 
   const [isMobile, setIsMobile] = useState(false);
 
@@ -311,22 +314,22 @@ export function Weather({
 
   const hoursToShow = isMobile ? 5 : 6;
 
-  const currentTimeIndex = weatherAtLocation.hourly.time.findIndex(
-    (time) => new Date(time) >= new Date(weatherAtLocation.current.time)
-  );
+  const currentTimeIndex = weatherAtLocation.hourly?.time?.findIndex(
+    (time) => new Date(time) >= new Date(weatherAtLocation.current?.time ?? new Date())
+  ) ?? 0;
 
-  const displayTimes = weatherAtLocation.hourly.time.slice(
+  const displayTimes = weatherAtLocation.hourly?.time?.slice(
     currentTimeIndex,
     currentTimeIndex + hoursToShow
-  );
-  const displayTemperatures = weatherAtLocation.hourly.temperature_2m.slice(
+  ) ?? [];
+  const displayTemperatures = weatherAtLocation.hourly?.temperature_2m?.slice(
     currentTimeIndex,
     currentTimeIndex + hoursToShow
-  );
+  ) ?? [];
 
   const location =
     weatherAtLocation.cityName ||
-    `${weatherAtLocation.latitude?.toFixed(1)}°, ${weatherAtLocation.longitude?.toFixed(1)}°`;
+    `${(weatherAtLocation.latitude ?? 0).toFixed(1)}°, ${(weatherAtLocation.longitude ?? 0).toFixed(1)}°`;
 
   return (
     <div
@@ -347,7 +350,7 @@ export function Weather({
         <div className="mb-2 flex items-center justify-between">
           <div className="font-medium text-white/80 text-xs">{location}</div>
           <div className="text-white/60 text-xs">
-            {format(new Date(weatherAtLocation.current.time), "MM月dd日 HH:mm")}
+            {format(new Date(weatherAtLocation.current?.time ?? new Date()), "MM月dd日 HH:mm")}
           </div>
         </div>
 
@@ -362,9 +365,9 @@ export function Weather({
               {isDay ? <SunIcon size={32} /> : <MoonIcon size={32} />}
             </div>
             <div className="font-light text-3xl text-white">
-              {n(weatherAtLocation.current.temperature_2m)}
+              {n(weatherAtLocation.current?.temperature_2m ?? 0)}
               <span className="text-lg text-white/80">
-                {weatherAtLocation.current_units.temperature_2m}
+                {weatherAtLocation.current_units?.temperature_2m ?? '°C'}
               </span>
             </div>
           </div>
@@ -384,7 +387,7 @@ export function Weather({
             每小时预报
           </div>
           <div className="flex justify-between gap-1">
-            {displayTimes.map((time, index) => {
+            {displayTimes?.map((time, index) => {
               const hourTime = new Date(time);
               const isCurrentHour =
                 hourTime.getHours() === new Date().getHours();
@@ -413,7 +416,7 @@ export function Weather({
                   </div>
 
                   <div className="font-medium text-white text-xs">
-                    {n(displayTemperatures[index])}°
+                    {n(displayTemperatures?.[index] ?? 0)}°
                   </div>
                 </div>
               );
@@ -424,11 +427,11 @@ export function Weather({
         <div className="mt-2 flex justify-between text-white/60 text-xs">
           <div>
             日出:{" "}
-            {format(new Date(weatherAtLocation.daily.sunrise[0]), "h:mm a")}
+            {format(new Date(weatherAtLocation.daily?.sunrise?.[0] ?? new Date()), "h:mm a")}
           </div>
           <div>
             日落:{" "}
-            {format(new Date(weatherAtLocation.daily.sunset[0]), "h:mm a")}
+            {format(new Date(weatherAtLocation.daily?.sunset?.[0] ?? new Date()), "h:mm a")}
           </div>
         </div>
       </div>

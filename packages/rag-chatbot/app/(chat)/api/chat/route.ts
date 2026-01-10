@@ -24,6 +24,8 @@ import { generateUUID } from "@/lib/utils";
 import { auth } from "@/lib/auth";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { getHotNews } from "@/lib/ai/tools/get-hotnews";
+import { getDailyNewsImage } from "@/lib/ai/tools/get-daily-news-image";
+import { getRandomImage } from "@/lib/ai/tools/get-random-image";
 
 // 初始化可恢复流上下文
 let globalStreamContext: ResumableStreamContext | null = null;
@@ -128,7 +130,7 @@ export async function POST(request: Request) {
           model: deepseek.chat("mimo-v2-flash"),
           system: "你是rzx训练出来的大语言模型",
           messages: await convertToModelMessages(messages),
-          tools: { getWeather, getHotNews },
+          tools: { getWeather, getHotNews, getDailyNewsImage, getRandomImage },
           stopWhen: stepCountIs(5),
         });
         // 【核心】即使客户端刷新/关闭，服务器也要悄悄把话写完存进 Redis

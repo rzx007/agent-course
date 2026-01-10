@@ -30,6 +30,7 @@ export const getHotNews = tool({
   inputSchema: z.object({
     type: z
       .enum(HOTBOARD_TYPES)
+      .default("douyin")
       .describe(
         "要查询的热榜平台类型，例如：'weibo'(微博热搜)、'bilibili'(B站热榜)、'zhihu'(知乎热榜)、'baidu'(百度热搜)等"
       ),

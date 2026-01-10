@@ -46,16 +46,13 @@ function PureChatHeader({
       )}
       <div className="order-3 md:ml-auto md:flex gap-2">
         <Button
-          className=" ml-auto h-8 px-2  md:ml-0 md:h-fit md:px-2"
+          className=" ml-auto h-8 px-2 md:ml-0 md:h-fit md:px-2 hidden md:flex"
           onClick={() => {
             setTheme(resolvedTheme === "dark" ? "light" : "dark");
           }}
           variant="ghost"
         >
           {resolvedTheme === "dark" ? <Sun /> : <Moon />}
-          <span className="md:sr-only">
-            {resolvedTheme === "dark" ? "Light" : "Dark"}
-          </span>
         </Button>
         {session.data ? (
           <div className=" md:ml-auto md:flex">

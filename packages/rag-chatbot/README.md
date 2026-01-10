@@ -173,6 +173,110 @@ rag-chatbot/
 - **代码高亮**：使用 Shiki 进行语法高亮
 - **Markdown 渲染**：支持富文本消息
 - **可恢复流**：使用 Redis 支持流式传输中断恢复
+- **工具调用**：AI 可以调用多种工具来增强回复能力
+
+#### AI 工具集成
+
+本项目集成了多个实用工具，AI 可以根据用户需求自动调用相应的工具：
+
+**1. 天气查询 (getWeather)**
+- **功能**：获取指定城市或坐标的实时天气信息
+- **数据源**：Open-Meteo API
+- **支持输入**：
+  - 城市名称（如：北京、San Francisco）
+  - 经纬度坐标
+- **返回信息**：当前温度、每小时温度预报、日出日落时间
+- **使用示例**：
+  - "北京今天天气怎么样？"
+  - "查询一下纽约的天气"
+
+**2. 热榜查询 (getHotNews)**
+- **功能**：获取各大主流平台的实时热榜/热搜数据
+- **数据源**：UapiPro API (https://uapis.cn)
+- **支持平台**（40+）：
+  - 视频/社区：bilibili、微博、知乎、抖音、快手等
+  - 新闻/资讯：百度、今日头条、腾讯新闻等
+  - 技术/IT：掘金、IT之家、CSDN等
+  - 游戏：原神、崩坏3、星穹铁道等
+  - 其他：微信读书、天气预警、地震速报等
+- **返回信息**：热榜标题、热度值、原文链接、更新时间
+- **使用示例**：
+  - "给我看看微博热搜"
+  - "查询知乎热榜"
+  - "B站现在最火的是什么？"
+
+**3. 每日新闻图 (getDailyNewsImage)**
+- **功能**：一键生成今日新闻摘要图片
+- **数据源**：UapiPro API
+- **特点**：
+  - 实时抓取各大平台热点新闻
+  - 动态渲染成清晰美观的摘要图片
+  - 支持下载和分享
+- **适用场景**：早报、数字看板、应用首页
+- **使用示例**：
+  - "给我看看今天的新闻"
+  - "显示每日新闻摘要"
+  - "生成新闻早报"
+
+**4. 随机图片 (getRandomImage)**
+- **功能**：从海量图库中随机获取图片
+- **数据源**：UapiPro API
+- **支持分类**：
+  - 福瑞 (furry)：z4k、szs8k、s4k、4k
+  - 表情包 (bq)：有兽、熊猫、外国人、猫猫、ikun、二次元
+  - 二次元 (acg)：PC端、移动端
+  - AI绘画 (ai_drawing)
+  - 动漫图 (general_anime)
+  - 风景图 (landscape)
+  - 手机壁纸 (mobile_wallpaper)
+  - 电脑壁纸 (pc_wallpaper)
+  - 混合动漫 (anime)
+- **特点**：
+  - 支持子类别筛选
+  - 完全随机模式
+  - 显示原图链接
+  - 支持下载
+- **使用示例**：
+  - "给我一张随机图片"
+  - "来一张二次元图片"
+  - "显示一张风景壁纸"
+  - "随机来张福瑞图"
+
+#### 工具渲染架构
+
+项目使用了统一的工具渲染架构，具有以下特点：
+
+- **ToolRenderer 组件**：通用的工具渲染组件，支持所有工具
+- **React.memo 优化**：避免不必要的重渲染，提升性能
+- **类型安全**：完整的 TypeScript 类型定义
+- **可扩展性**：添加新工具只需配置 ToolRenderer 即可
+- **统一体验**：所有工具共享一致的 UI 风格
+
+添加新工具只需三步：
+
+```typescript
+// 1. 创建工具定义 (lib/ai/tools/your-tool.ts)
+export const yourTool = tool({
+  description: "工具描述",
+  inputSchema: z.object({...}),
+  execute: async (input) => {...}
+});
+
+// 2. 注册到后端 (app/(chat)/api/chat/route.ts)
+tools: { getWeather, getHotNews, getDailyNewsImage, getRandomImage, yourTool }
+
+// 3. 添加前端渲染 (components/chat-interface.tsx)
+case "tool-yourTool":
+  return (
+    <ToolRenderer
+      key={`${message.id}-${i}`}
+      part={part}
+      addToolApprovalResponse={addToolApprovalResponse}
+      renderOutput={(output) => <YourComponent data={output} />}
+      deniedMessage="拒绝操作"
+    />
+  );
+```
 
 ### 2. 用户认证
 
