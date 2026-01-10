@@ -37,7 +37,7 @@ export const getWeather = tool({
     longitude: z.number().optional(),
     city: z
       .string()
-      .describe("City name (e.g., 'San Francisco', 'New York', 'London')")
+      .describe("City name (e.g., 'San Francisco', 'New York', 'London', 'Beijing')")
       .optional(),
   }),
   needsApproval: false, // **注意** 设置needsApproval: true，调用工具时需要审批

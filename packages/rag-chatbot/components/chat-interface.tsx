@@ -61,6 +61,8 @@ import { useRefreshChatHistory } from "@/hooks/use-chat-history";
 import { chatModels } from "@/lib/ai/models";
 import { Tool, ToolHeader, ToolContent, ToolInput } from "./ai-elements/tool";
 import { Weather, WeatherAtLocation } from "./weather";
+import { HotNews, HotNewsData } from "./hot-news";
+import { renderToolWithApproval } from "./tool-renderer";
 
 interface ChatInterfaceProps {
   /**
@@ -260,100 +262,24 @@ export const ChatInterface = ({
                       </MessageAttachments>
                     );
                   case "tool-getWeather":
-                    const { toolCallId, state } = part;
-                    const approvalId = (part as { approval?: { id: string } })
-                      .approval?.id;
-
-                    const widthClass = "w-[min(100%,450px)]";
-
-                    // 工具输出可用时的视图(可以指定输出格式)
-                    if (state === "output-available") {
-                      return (
-                        <div className={widthClass} key={toolCallId}>
-                          <Weather weatherAtLocation={part.output as WeatherAtLocation} />
-                        </div>
-                      );
-                    }
-
-                    // 拒绝调用工具时的视图
-                    const isDenied =
-                      state === "output-denied" ||
-                      (state === "approval-responded" &&
-                        (part as { approval?: { approved?: boolean } }).approval
-                          ?.approved === false);
-                    if (isDenied) {
-                      return (
-                        <div className={widthClass} key={toolCallId}>
-                          <Tool className="w-full" defaultOpen={true}>
-                            <ToolHeader
-                              state="output-denied"
-                              type="tool-getWeather"
-                            />
-                            <ToolContent>
-                              <div className="px-4 py-3 text-muted-foreground text-sm">
-                                拒绝天气查询
-                              </div>
-                            </ToolContent>
-                          </Tool>
-                        </div>
-                      );
-                    }
-                    // 已经审批，等待工具输出前的视图
-                    if (state === "approval-responded") {
-                      return (
-                        <div className={widthClass} key={toolCallId}>
-                          <Tool className="w-full" defaultOpen={true}>
-                            <ToolHeader state={state} type="tool-getWeather" />
-                            <ToolContent>
-                              <ToolInput input={part.input} />
-                            </ToolContent>
-                          </Tool>
-                        </div>
-                      );
-                    }
-                    // 等待审批的视图
-                    return (
-                      <div className={widthClass} key={toolCallId}>
-                        <Tool className="w-full" defaultOpen={true}>
-                          <ToolHeader state={state} type="tool-getWeather" />
-                          <ToolContent>
-                            {(state === "input-available" ||
-                              state === "approval-requested") && (
-                              <ToolInput input={part.input} />
-                            )}
-                            {state === "approval-requested" && approvalId && (
-                              <div className="flex items-center justify-end gap-2 border-t px-4 py-3">
-                                <button
-                                  className="rounded-md px-3 py-1.5 text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground"
-                                  onClick={() => {
-                                    addToolApprovalResponse({
-                                      id: approvalId,
-                                      approved: false,
-                                      reason: "User denied weather lookup",
-                                    });
-                                  }}
-                                  type="button"
-                                >
-                                  拒绝
-                                </button>
-                                <button
-                                  className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground text-sm transition-colors hover:bg-primary/90"
-                                  onClick={() => {
-                                    addToolApprovalResponse({
-                                      id: approvalId,
-                                      approved: true,
-                                    });
-                                  }}
-                                  type="button"
-                                >
-                                  允许
-                                </button>
-                              </div>
-                            )}
-                          </ToolContent>
-                        </Tool>
-                      </div>
-                    );
+                    return renderToolWithApproval({
+                      part,
+                      addToolApprovalResponse,
+                      renderOutput: (output) => (
+                        <Weather weatherAtLocation={output as WeatherAtLocation} />
+                      ),
+                      deniedMessage: "拒绝天气查询",
+                    });
+                  case "tool-getHotNews":
+                    return renderToolWithApproval({
+                      part,
+                      addToolApprovalResponse,
+                      renderOutput: (output) => (
+                        <HotNews hotNewsData={output as HotNewsData} />
+                      ),
+                      deniedMessage: "拒绝热榜查询",
+                      className: "w-[min(100%,600px)]",
+                    });
                   default:
                     return null;
                 }
