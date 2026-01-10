@@ -40,7 +40,7 @@ export const getWeather = tool({
       .describe("City name (e.g., 'San Francisco', 'New York', 'London')")
       .optional(),
   }),
-  needsApproval: true, // **注意** 设置needsApproval: true，调用工具时需要审批
+  needsApproval: false, // **注意** 设置needsApproval: true，调用工具时需要审批
   execute: async (input) => {
     let latitude: number;
     let longitude: number;

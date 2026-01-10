@@ -60,6 +60,7 @@ import { ChatMessage } from "@/lib/types";
 import { useRefreshChatHistory } from "@/hooks/use-chat-history";
 import { chatModels } from "@/lib/ai/models";
 import { Tool, ToolHeader, ToolContent, ToolInput } from "./ai-elements/tool";
+import { Weather, WeatherAtLocation } from "./weather";
 
 interface ChatInterfaceProps {
   /**
@@ -122,31 +123,6 @@ export const ChatInterface = ({
         // 更新历史列表 - 使用 React Query 刷新
         console.log("Updated chat title:", part.data);
         refreshChatHistory();
-      }
-    },
-    // 【方案2】在客户端 onFinish 中保存消息
-    onFinish: async ({ messages: finishedMessages }) => {
-      if (!id) return;
-      
-      // 只保存 assistant 消息(用户消息在服务端已经保存)
-      const assistantMessages = finishedMessages.filter(
-        (msg) => msg.role === "assistant"
-      );
-      
-      if (assistantMessages.length > 0) {
-        try {
-          await fetch("/api/chat/messages", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              chatId: id,
-              messages: assistantMessages,
-            }),
-          });
-          console.log("✅ 消息已保存到数据库");
-        } catch (error) {
-          console.error("❌ 保存消息失败:", error);
-        }
       }
     },
   });
@@ -292,37 +268,9 @@ export const ChatInterface = ({
 
                     // 工具输出可用时的视图(可以指定输出格式)
                     if (state === "output-available") {
-                      const weatherData = part.output as {
-                        cityName?: string;
-                        current?: { temperature_2m?: number };
-                        elevation?: number;
-                        timezone?: string;
-                      };
-                      const city = (part.input as { city: string }).city;
-                      
                       return (
-                        <div key={part.toolCallId} className="mb-4">
-                          <div className="rounded-lg border bg-card p-4">
-                            <h3 className="font-semibold mb-2">
-                              🌡️ {weatherData.cityName || city} 的天气
-                            </h3>
-                            <div className="space-y-2 text-sm">
-                              <p>
-                                <span className="text-muted-foreground">当前温度:</span>{" "}
-                                <span className="font-medium">
-                                  {weatherData.current?.temperature_2m}°C
-                                </span>
-                              </p>
-                              <p>
-                                <span className="text-muted-foreground">海拔:</span>{" "}
-                                {weatherData.elevation}m
-                              </p>
-                              <p>
-                                <span className="text-muted-foreground">时区:</span>{" "}
-                                {weatherData.timezone}
-                              </p>
-                            </div>
-                          </div>
+                        <div className={widthClass} key={toolCallId}>
+                          <Weather weatherAtLocation={part.output as WeatherAtLocation} />
                         </div>
                       );
                     }

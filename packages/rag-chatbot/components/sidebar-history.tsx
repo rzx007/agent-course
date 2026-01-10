@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { usePathname } from "next/navigation";
+import {  useRouter, useParams } from "next/navigation";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -62,14 +62,13 @@ const groupChatsByDate = (chats: Chat[]): GroupedChats => {
 
 export function SidebarHistory() {
   const { data: session } = useSession();
-  const pathname = usePathname();
+  const router = useRouter();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // 从 URL 路径中获取当前活跃的聊天 ID
-  const activeChatId = pathname?.startsWith("/chat/")
-    ? pathname.split("/chat/")[1]
-    : null;
+  const params = useParams();
+  const activeChatId = params?.id || null;
 
   // 使用 React Query 获取聊天历史
   const { data, isLoading, error } = useChatHistory(100);
@@ -103,8 +102,16 @@ export function SidebarHistory() {
     if (!deleteId) return;
 
     try {
+      // 检查是否删除的是当前正在查看的聊天
+      const isDeletingCurrentChat = activeChatId === deleteId;
+
       await deleteChatMutation.mutateAsync(deleteId);
       toast.success("聊天记录已删除");
+
+      // 如果删除的是当前聊天,跳转到首页
+      if (isDeletingCurrentChat) {
+        router.push("/");
+      }
     } catch (error) {
       console.error("Failed to delete chat:", error);
       toast.error("删除失败");

@@ -30,7 +30,7 @@ export const chat = pgTable("Chat", {
 export type Chat = InferSelectModel<typeof chat>;
 
 export const message = pgTable("Message_v2", {
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  id: varchar("id").primaryKey().notNull(),
   chatId: uuid("chatId")
     .notNull()
     .references(() => chat.id, { onDelete: "cascade" }),

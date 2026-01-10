@@ -17,6 +17,7 @@ import {
   createStreamId,
   getChatById,
   updateChatTitleById,
+  updateMessage,
 } from "@/lib/db/queries";
 import { generateTitleFromUserMessage } from "@/app/(chat)/actions";
 import { generateUUID } from "@/lib/utils";
@@ -101,7 +102,7 @@ export async function POST(request: Request) {
       // 2. 注入自定义参数
       const modifiedBody = {
         ...body,
-        thinking: { type: "enabled" },
+        // thinking: { type: "enabled" }, // 启用思考过程
       };
       const response = await fetch(url, {
         ...options,
@@ -117,12 +118,16 @@ export async function POST(request: Request) {
   const stream = createUIMessageStream({
     execute: async ({ writer: dataStream }) => {
       try {
-        dataStream.write({ type: "data-chat-title", data: "", transient: true });
+        dataStream.write({
+          type: "data-chat-title",
+          data: "",
+          transient: true,
+        });
         const result = streamText({
           model: deepseek.chat("mimo-v2-flash"),
           system: "你是rzx训练出来的大语言模型",
           messages: await convertToModelMessages(messages),
-          tools: {getWeather},
+          tools: { getWeather },
           stopWhen: stepCountIs(5),
         });
         // 【核心】即使客户端刷新/关闭，服务器也要悄悄把话写完存进 Redis
@@ -151,9 +156,34 @@ export async function POST(request: Request) {
         });
       }
     },
-    // 【关键修复】移除 onFinish 回调，因为它与 needsApproval: true 的工具冲突
-    // 参考: https://github.com/vercel/ai/issues/10169
-    // 消息保存改由客户端 onFinish 回调处理，或者使用数据库视图/触发器
+    onFinish: async ({ messages: finishedMessages }) => {
+      // 3. 结束后持久化到数据库
+      for (const finishedMsg of finishedMessages) {
+        const existingMsg = messages.find(
+          (m: { id: string }) => m.id === finishedMsg.id
+        );
+        if (existingMsg) {
+          // 更新已存在的消息部分（工具状态已改变，工具不同状态的消息id是一样的，只存储最终结果）
+          await updateMessage({
+            id: finishedMsg.id,
+            parts: finishedMsg.parts,
+          });
+        } else {
+          await saveMessages({
+            messages: [
+              {
+                id: finishedMsg.id,
+                role: finishedMsg.role,
+                parts: finishedMsg.parts,
+                createdAt: new Date(),
+                attachments: [],
+                chatId: id,
+              },
+            ],
+          });
+        }
+      }
+    },
   });
 
   // 4. 将流包裹在可恢复上下文中并返回
