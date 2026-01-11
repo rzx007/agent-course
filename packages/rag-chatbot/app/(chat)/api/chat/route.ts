@@ -4,6 +4,7 @@ import {
   streamText,
   convertToModelMessages,
   stepCountIs,
+  smoothStream,
 } from "ai";
 import { after } from "next/server";
 import {
@@ -130,6 +131,7 @@ export async function POST(request: Request) {
         const result = streamText({
           model: deepseek.chat("mimo-v2-flash"),
           system: systemPrompt,
+          experimental_transform: smoothStream(),
           messages: await convertToModelMessages(messages),
           tools: { getWeather, getHotNews, getDailyNewsImage, getRandomImage },
           stopWhen: [stepCountIs(5)],

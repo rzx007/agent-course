@@ -26,13 +26,13 @@ export type HotboardType = typeof HOTBOARD_TYPES[number];
  */
 export const getHotNews = tool({
   description:
-    "获取各大主流平台的实时热榜/热搜数据，包括哔哩哔哩、微博、知乎、抖音、百度等平台。每个热榜条目包含标题、热度值和原始链接。",
+    "获取各大主流平台的实时热榜/热搜数据，包括哔哩哔哩、微博、知乎、抖音、百度等平台。每个热榜条目包含标题、热度值和原始链接。默认查询抖音热搜。",
   inputSchema: z.object({
     type: z
       .enum(HOTBOARD_TYPES)
       .default("douyin")
       .describe(
-        "要查询的热榜平台类型，例如：'weibo'(微博热搜)、'bilibili'(B站热榜)、'zhihu'(知乎热榜)、'baidu'(百度热搜)等"
+        "要查询的热榜平台类型，例如：'douyin(抖音热搜)' 'weibo'(微博热搜)、'bilibili'(B站热榜)、'zhihu'(知乎热榜)、'baidu'(百度热搜)等"
       ),
   }),
   needsApproval: false,
