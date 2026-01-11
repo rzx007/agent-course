@@ -132,7 +132,7 @@ export async function POST(request: Request) {
           system: systemPrompt,
           messages: await convertToModelMessages(messages),
           tools: { getWeather, getHotNews, getDailyNewsImage, getRandomImage },
-          stopWhen: stepCountIs(5),
+          stopWhen: [stepCountIs(5)],
         });
         // 【核心】即使客户端刷新/关闭，服务器也要悄悄把话写完存进 Redis
         result.consumeStream();

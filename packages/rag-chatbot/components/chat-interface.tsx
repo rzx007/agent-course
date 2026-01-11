@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useChat } from "@ai-sdk/react";
+import { useChat, isStaticToolUIPart, getStaticToolName } from "@ai-sdk/react";
 import { CopyIcon, RefreshCcwIcon } from "lucide-react";
 import {
   Conversation,
@@ -170,8 +170,14 @@ export const ChatInterface = ({
 
     const actualIndex = messages.length - 1 - lastAssistantIndex;
     const lastAssistantMessage = messages[actualIndex];
-    // 找到对应的 user 消息（通常在 assistant 消息的前一条）
-    const correspondingUserMessage = messages[actualIndex - 1];
+    
+    // 找到最后一个 role 为 user 的消息
+    const lastUserIndex = [...messages]
+      .reverse()
+      .findIndex((msg) => msg.role === "user");
+    const correspondingUserMessage = lastUserIndex !== -1 
+      ? messages[messages.length - 1 - lastUserIndex]
+      : null;
 
     try {
       // 删除 assistant 消息

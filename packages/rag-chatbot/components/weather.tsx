@@ -334,7 +334,7 @@ export function Weather({
   return (
     <div
       className={cn(
-        "relative flex w-full flex-col gap-3 overflow-hidden rounded-2xl p-4 shadow-lg backdrop-blur-sm",
+        "relative flex w-full flex-col gap-3 overflow-hidden rounded-2xl p-4 shadow-lg backdrop-blur-sm my-2",
         {
           "bg-linear-to-br from-sky-400 via-blue-500 to-blue-600": isDay,
         },

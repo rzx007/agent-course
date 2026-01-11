@@ -27,7 +27,6 @@ const ChatPage = async ({ params }: ChatPageProps) => {
     // 确保 messagesFromDb 是数组
     if (Array.isArray(messagesFromDb)) {
       uiMessages = convertToUIMessages(messagesFromDb);
-      console.log("🚀 ~ ChatPage ~ uiMessages:", uiMessages)
     } else {
       console.error('getMessagesByChatId returned non-array:', messagesFromDb);
     }
