@@ -65,11 +65,11 @@ pnpm install
 在项目根目录或 `packages/rag-chatbot` 目录下创建 `.env` 文件：
 
 ```bash
-# AI 模型配置（小蜜米莫平台）
+# AI 模型配置（小米mimo模型或deepseek）
 OPENAI_BASE_URL=https://api.xiaomimimo.com/v1
 OPENAI_API_KEY=your_api_key_here
 
-# 数据库配置
+# pg数据库配置
 POSTGRES_URL=postgresql://user:password@host:port/database
 
 # Better Auth 配置
@@ -81,7 +81,7 @@ GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
 
 # Redis 配置（可选，用于流式响应恢复）
-REDIS_URL=redis://localhost:6379
+REDIS_URL=redis://localhost:6379 # 默认
 ```
 
 ### 数据库初始化
