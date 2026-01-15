@@ -6,7 +6,9 @@ async function geocodeCity(
 ): Promise<{ latitude: number; longitude: number } | null> {
   try {
     const response = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
+        city
+      )}&count=1&language=en&format=json`
     );
 
     if (!response.ok) {
@@ -37,7 +39,9 @@ export const getWeather = tool({
     longitude: z.number().optional(),
     city: z
       .string()
-      .describe("City name (e.g., 'San Francisco', 'New York', 'London', 'Beijing')")
+      .describe(
+        "City name (e.g., 'San Francisco', 'New York', 'London', 'Beijing')"
+      )
       .default("Wuhan")
       .optional(),
   }),

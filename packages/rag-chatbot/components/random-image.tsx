@@ -1,8 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { ImageIcon, AlertCircleIcon, TagIcon, ExternalLinkIcon } from "lucide-react";
+import {
+  ImageIcon,
+  AlertCircleIcon,
+  TagIcon,
+  ExternalLinkIcon,
+} from "lucide-react";
 import { useState } from "react";
+import Zoom from "react-medium-image-zoom";
+import "react-medium-image-zoom/dist/styles.css";
 
 /**
  * 随机图片数据接口
@@ -54,7 +61,8 @@ const categoryNames: Record<string, string> = {
  * 随机图片展示组件
  */
 export const RandomImage = ({ data }: RandomImageProps) => {
-  const { imageUrl, originalUrl, contentType, size, category, type, error } = data;
+  const { imageUrl, originalUrl, contentType, size, category, type, error } =
+    data;
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
@@ -122,23 +130,24 @@ export const RandomImage = ({ data }: RandomImageProps) => {
             </div>
           </div>
         )}
-
-        <Image
-          src={imageUrl}
-          alt={`${categoryNames[category || "random"]} - 随机图片`}
-          className={`mx-auto max-w-full rounded-lg shadow-md transition-opacity duration-300 ${
-            isLoading ? "opacity-0" : "opacity-100"
-          }`}
-          width={800}
-          height={600}
-          unoptimized
-          onLoad={() => setIsLoading(false)}
-          onError={() => {
-            setIsLoading(false);
-            setHasError(true);
-          }}
-          style={{ display: hasError ? "none" : "block" }}
-        />
+        <Zoom>
+          <Image
+            src={imageUrl}
+            alt={`${categoryNames[category || "random"]} - 随机图片`}
+            className={`mx-auto max-w-full rounded-lg shadow-md transition-opacity duration-300 ${
+              isLoading ? "opacity-0" : "opacity-100"
+            }`}
+            width={800}
+            height={600}
+            unoptimized
+            onLoad={() => setIsLoading(false)}
+            onError={() => {
+              setIsLoading(false);
+              setHasError(true);
+            }}
+            style={{ display: hasError ? "none" : "block" }}
+          />
+        </Zoom>
       </div>
 
       {/* 底部信息 */}
@@ -166,7 +175,9 @@ export const RandomImage = ({ data }: RandomImageProps) => {
             )}
             <a
               href={imageUrl}
-              download={`随机图片-${category || "random"}-${new Date().getTime()}.jpg`}
+              download={`随机图片-${
+                category || "random"
+              }-${new Date().getTime()}.jpg`}
               className="text-primary transition-colors hover:text-primary/80 hover:underline"
             >
               下载图片

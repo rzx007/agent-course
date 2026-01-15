@@ -135,7 +135,16 @@ export async function POST(request: Request) {
           messages: await convertToModelMessages(messages),
           tools: { getWeather, getHotNews, getDailyNewsImage, getRandomImage },
           stopWhen: [stepCountIs(5)],
+          onError: (error) => {
+            console.log("🚀 ~ POST ~ error:", JSON.stringify(error));
+            dataStream.write({
+              type: "error",
+              errorText:
+                error instanceof Error ? error.message : "Unknown error",
+            });
+          },
         });
+
         // 【核心】即使客户端刷新/关闭，服务器也要悄悄把话写完存进 Redis
         result.consumeStream();
         // 将 AI SDK 的原始流合并进我们的数据流
@@ -154,7 +163,7 @@ export async function POST(request: Request) {
           })
         );
       } catch (error) {
-        console.error("Error in stream execution:", error);
+        console.log("🚀 ~ POST1 ~ error:", error);
         // 写入错误信息到流中
         dataStream.write({
           type: "error",

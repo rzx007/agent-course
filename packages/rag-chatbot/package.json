@@ -60,6 +60,7 @@
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-medium-image-zoom": "^5.4.0",
     "redis": "^5.10.0",
     "resumable-stream": "^2.2.10",
     "shiki": "^3.20.0",
