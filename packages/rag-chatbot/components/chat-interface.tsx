@@ -86,6 +86,7 @@ export const ChatInterface = ({
     status,
     regenerate,
     stop,
+    error,
     addToolApprovalResponse,
   } = useChat({
     id,
@@ -162,7 +163,7 @@ export const ChatInterface = ({
     const lastAssistantIndex = [...messages]
       .reverse()
       .findIndex((msg) => msg.role === "assistant");
-    
+
     if (lastAssistantIndex === -1) {
       regenerate();
       return;
@@ -170,12 +171,12 @@ export const ChatInterface = ({
 
     const actualIndex = messages.length - 1 - lastAssistantIndex;
     const lastAssistantMessage = messages[actualIndex];
-    
+
     // 找到最后一个 role 为 user 的消息
     const lastUserIndex = [...messages]
       .reverse()
       .findIndex((msg) => msg.role === "user");
-    const correspondingUserMessage = lastUserIndex !== -1 
+    const correspondingUserMessage = lastUserIndex !== -1
       ? messages[messages.length - 1 - lastUserIndex]
       : null;
 
@@ -208,8 +209,8 @@ export const ChatInterface = ({
       {showGreeting && messages.length === 0 && greetingComponent}
       <Conversation className="h-full">
         <ConversationContent className="max-w-4xl mx-auto">
-          {messages.map((message, index) => (
-            <div key={message.id}>
+          {messages.map((message, index) => {
+            return <div key={message.id}>
               {message.parts.map((part, i) => {
                 switch (part.type) {
                   case "text":
@@ -349,8 +350,8 @@ export const ChatInterface = ({
                       ))}
                   </Sources>
                 )}
-            </div>
-          ))}
+            </div>;
+          })}
           {status === "submitted" && <Loader />}
         </ConversationContent>
         <ConversationScrollButton />

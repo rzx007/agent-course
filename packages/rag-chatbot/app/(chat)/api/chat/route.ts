@@ -5,6 +5,7 @@ import {
   convertToModelMessages,
   stepCountIs,
   smoothStream,
+  UIMessage,
 } from "ai";
 import { after } from "next/server";
 import {
@@ -27,6 +28,7 @@ import { getWeather } from "@/lib/ai/tools/get-weather";
 import { getHotNews } from "@/lib/ai/tools/get-hotnews";
 import { getDailyNewsImage } from "@/lib/ai/tools/get-daily-news-image";
 import { getRandomImage } from "@/lib/ai/tools/get-random-image";
+import { getBestOfJsHot } from "@/lib/ai/tools/get-bestofjs-hot";
 import { systemPrompt } from "@/lib/ai/prompts";
 
 // 初始化可恢复流上下文
@@ -73,7 +75,8 @@ export async function POST(request: Request) {
     await saveChat({ id, title: "New Chat", userId: session.user.id });
     // 生成标题
     const title = await generateTitleFromUserMessage({
-      message: lastMessage,
+      message: lastMessage as UIMessage,
+      model: model ?? 'deepseek-chat',
     });
     updateChatTitleById({ chatId: id, title });
   }
@@ -129,14 +132,19 @@ export async function POST(request: Request) {
           transient: true,
         });
         const result = streamText({
-          model: deepseek.chat("mimo-v2-flash"),
+          model: deepseek.chat(model ?? 'deepseek-chat'),
           system: systemPrompt,
           experimental_transform: smoothStream(),
           messages: await convertToModelMessages(messages),
-          tools: { getWeather, getHotNews, getDailyNewsImage, getRandomImage },
+          tools: {
+            getWeather,
+            getHotNews,
+            getDailyNewsImage,
+            getRandomImage,
+            getBestOfJsHot,
+          },
           stopWhen: [stepCountIs(5)],
           onError: (error) => {
-            console.log("🚀 ~ POST ~ error:", JSON.stringify(error));
             dataStream.write({
               type: "error",
               errorText:
@@ -163,7 +171,6 @@ export async function POST(request: Request) {
           })
         );
       } catch (error) {
-        console.log("🚀 ~ POST1 ~ error:", error);
         // 写入错误信息到流中
         dataStream.write({
           type: "error",

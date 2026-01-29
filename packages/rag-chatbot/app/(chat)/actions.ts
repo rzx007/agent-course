@@ -6,15 +6,17 @@ import { titlePrompt } from "@/lib/ai/prompts";
 
 export async function generateTitleFromUserMessage({
   message,
+  model,
 }: {
   message: UIMessage;
+  model: string;
 }) {
   const deepseek = createDeepSeek({
     apiKey: process.env.OPENAI_API_KEY,
     baseURL: process.env.OPENAI_BASE_URL || "",
   });
   const { text: title } = await generateText({
-    model: deepseek.chat("mimo-v2-flash"),
+    model: deepseek.chat(model??'deepseek-chat'),
     system: titlePrompt,
     prompt: await getTextFromMessage(message),
   });

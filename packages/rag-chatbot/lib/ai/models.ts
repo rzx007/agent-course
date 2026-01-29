@@ -9,12 +9,6 @@ export type ChatModel = {
 
 export const chatModels: ChatModel[] = [
   {
-    id: "mimo-v2-flash",
-    name: "XiaoMi Mimo",
-    provider: "xiaomi",
-    description: "Fast and cost-effective for simple tasks",
-  },
-  {
     id: "deepseek-chat",
     name: "Deepseek V3.2",
     provider: "deepseek",
@@ -26,5 +20,10 @@ export const chatModels: ChatModel[] = [
     provider: "deepseek",
     description: "deepseek reasoner",
   },
- 
+  {
+    id: "mimo-v2-flash",
+    name: "XiaoMi Mimo",
+    provider: "xiaomi",
+    description: "Fast and cost-effective for simple tasks",
+  },
 ];
