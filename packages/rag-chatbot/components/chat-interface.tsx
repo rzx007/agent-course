@@ -219,25 +219,7 @@ export const ChatInterface = ({
                         <MessageContent>
                           <MessageResponse>{part.text}</MessageResponse>
                         </MessageContent>
-                        {message.role === "assistant" &&
-                          index === messages.length - 1 && (
-                            <MessageActions>
-                              <MessageAction
-                                onClick={() => handleRegenerate()}
-                                label="Retry"
-                              >
-                                <RefreshCcwIcon className="size-3" />
-                              </MessageAction>
-                              <MessageAction
-                                onClick={() =>
-                                  navigator.clipboard.writeText(part.text)
-                                }
-                                label="Copy"
-                              >
-                                <CopyIcon className="size-3" />
-                              </MessageAction>
-                            </MessageActions>
-                          )}
+
                         {/* {message.metadata && (
                           <div className="text-xs text-gray-400">
                             {JSON.stringify(message.metadata)}
@@ -350,7 +332,27 @@ export const ChatInterface = ({
                       ))}
                   </Sources>
                 )}
+              {message.role === "assistant" &&
+                index === messages.length - 1 && status !== "streaming" && (
+                  <MessageActions>
+                    <MessageAction
+                      onClick={() => handleRegenerate()}
+                      label="Retry"
+                    >
+                      <RefreshCcwIcon className="size-3" />
+                    </MessageAction>
+                    <MessageAction
+                      onClick={() =>
+                        navigator.clipboard.writeText(message.parts.find((part) => part.type === "text")?.text || "")
+                      }
+                      label="Copy"
+                    >
+                      <CopyIcon className="size-3" />
+                    </MessageAction>
+                  </MessageActions>
+                )}
             </div>;
+
           })}
           {status === "submitted" && <Loader />}
         </ConversationContent>

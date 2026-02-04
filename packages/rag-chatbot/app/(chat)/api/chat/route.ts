@@ -29,6 +29,7 @@ import { getHotNews } from "@/lib/ai/tools/get-hotnews";
 import { getDailyNewsImage } from "@/lib/ai/tools/get-daily-news-image";
 import { getRandomImage } from "@/lib/ai/tools/get-random-image";
 import { getBestOfJsHot } from "@/lib/ai/tools/get-bestofjs-hot";
+import { serpApiWebSearchTool } from "@/lib/ai/tools/serpapi-web-searchTool";
 import { systemPrompt } from "@/lib/ai/prompts";
 
 // 初始化可恢复流上下文
@@ -142,6 +143,7 @@ export async function POST(request: Request) {
             getDailyNewsImage,
             getRandomImage,
             getBestOfJsHot,
+            ...(webSearch ? { webSearch: serpApiWebSearchTool } : {}),
           },
           stopWhen: [stepCountIs(5)],
           onError: (error) => {
