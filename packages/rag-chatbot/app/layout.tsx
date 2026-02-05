@@ -5,6 +5,7 @@ import { Providers } from "@/components/auth-ui-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 
 import "./globals.css";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,17 +29,26 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {process.env.NODE_ENV === "development" && (
+          <Script
+            src="//unpkg.com/react-grab/dist/index.global.js"
+            crossOrigin="anonymous"
+            strategy="beforeInteractive"
+          />
+        )}
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider  
+        <ThemeProvider
           attribute="class"
           defaultTheme="system"
           disableTransitionOnChange
           enableSystem>
-        <QueryProviders>
-          <Providers>{children}</Providers>
-        </QueryProviders>
+          <QueryProviders>
+            <Providers>{children}</Providers>
+          </QueryProviders>
         </ThemeProvider>
       </body>
     </html>
