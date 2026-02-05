@@ -12,7 +12,6 @@ import {
   createResumableStreamContext,
   ResumableStreamContext,
 } from "resumable-stream";
-import { createDeepSeek } from "@ai-sdk/deepseek";
 import {
   saveChat,
   saveMessages,
@@ -31,6 +30,8 @@ import { getRandomImage } from "@/lib/ai/tools/get-random-image";
 import { getBestOfJsHot } from "@/lib/ai/tools/get-bestofjs-hot";
 import { serpApiWebSearchTool } from "@/lib/ai/tools/serpapi-web-searchTool";
 import { systemPrompt } from "@/lib/ai/prompts";
+import { getModel } from "@/lib/ai/provider";
+import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
 
 // 初始化可恢复流上下文
 let globalStreamContext: ResumableStreamContext | null = null;
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
     // 生成标题
     const title = await generateTitleFromUserMessage({
       message: lastMessage as UIMessage,
-      model: model ?? 'deepseek-chat',
+      model: model ?? DEFAULT_CHAT_MODEL,
     });
     updateChatTitleById({ chatId: id, title });
   }
@@ -99,31 +100,6 @@ export async function POST(request: Request) {
   const streamId = generateUUID();
   await createStreamId({ streamId, chatId: id });
 
-  // 3. 创建使用手动流容器的 DeepSeek 客户端
-  const deepseek = createDeepSeek({
-    apiKey: process.env.OPENAI_API_KEY,
-    baseURL: process.env.OPENAI_BASE_URL || "",
-    // 自定义 fetch 实现,mimo-v2-flash有些独有的参数
-    fetch: async (url, options) => {
-      // 1. 解析原始请求体
-      const body = JSON.parse(options?.body as string);
-
-      // 2. 注入自定义参数
-      const modifiedBody = {
-        ...body,
-        // thinking: { type: "enabled" }, // 启用思考过程
-      };
-      const response = await fetch(url, {
-        ...options,
-        body: JSON.stringify(modifiedBody),
-      });
-      if (!response.ok) {
-        throw new Error(response.statusText);
-      }
-      // console.log(await response.text());
-      return response;
-    },
-  });
   const stream = createUIMessageStream({
     execute: async ({ writer: dataStream }) => {
       try {
@@ -133,7 +109,7 @@ export async function POST(request: Request) {
           transient: true,
         });
         const result = streamText({
-          model: deepseek.chat(model ?? 'deepseek-chat'),
+          model: getModel(model ?? DEFAULT_CHAT_MODEL),
           system: systemPrompt,
           experimental_transform: smoothStream(),
           messages: await convertToModelMessages(messages),

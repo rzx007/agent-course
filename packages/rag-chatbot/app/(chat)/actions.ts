@@ -1,8 +1,9 @@
 "use server";
 
 import { generateText, type UIMessage } from "ai";
-import { createDeepSeek } from "@ai-sdk/deepseek";
 import { titlePrompt } from "@/lib/ai/prompts";
+import { getModel } from "@/lib/ai/provider";
+import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
 
 export async function generateTitleFromUserMessage({
   message,
@@ -11,12 +12,8 @@ export async function generateTitleFromUserMessage({
   message: UIMessage;
   model: string;
 }) {
-  const deepseek = createDeepSeek({
-    apiKey: process.env.OPENAI_API_KEY,
-    baseURL: process.env.OPENAI_BASE_URL || "",
-  });
   const { text: title } = await generateText({
-    model: deepseek.chat(model??'deepseek-chat'),
+    model: getModel(model ?? DEFAULT_CHAT_MODEL),
     system: titlePrompt,
     prompt: await getTextFromMessage(message),
   });

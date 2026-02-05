@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { GlobeIcon } from "lucide-react";
 import {
   PromptInput,
@@ -124,9 +125,17 @@ export const ChatPromptInput = ({
               <PromptInputSelectValue />
             </PromptInputSelectTrigger>
             <PromptInputSelectContent>
-              {chatModels.map((model) => (
-                <PromptInputSelectItem key={model.id} value={model.id}>
-                  {model.name}
+              {chatModels.map((m) => (
+                <PromptInputSelectItem key={m.id} value={m.id}>
+                  <div className="flex items-center gap-2">
+                    <Image
+                      src={`/icons/${m.icon}`}
+                      alt={m.provider}
+                      width={16}
+                      height={16}
+                    />
+                    <span>{m.name}</span>
+                  </div>
                 </PromptInputSelectItem>
               ))}
             </PromptInputSelectContent>
