@@ -80,9 +80,6 @@ importers:
       ai:
         specifier: ^6.0.3
         version: 6.0.3(zod@4.2.1)
-      ai-sdk-zhipu:
-        specifier: ^0.0.2
-        version: 0.0.2(@ai-sdk/openai-compatible@2.0.27(zod@4.2.1))(@ai-sdk/provider@3.0.7)(ai@6.0.3(zod@4.2.1))(zod@4.2.1)
       bcrypt-ts:
         specifier: ^8.0.0
         version: 8.0.0
@@ -239,12 +236,6 @@ packages:
 
   '@ai-sdk/google@3.0.21':
     resolution: {integrity: sha512-qQuvcbDqDPZojtoT45UFCQVH2w3m6KJKKjqJduUsvhN5ZqOXste0h4HgHK8hwGuDfv96Jr9QQEpspbgp6iu5Uw==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
-
-  '@ai-sdk/openai-compatible@2.0.27':
-    resolution: {integrity: sha512-YpAZe7OQuMkYqcM/m1BMX0xFn4QdhuL4qGo8sNaiLq1VjEeU/pPfz51rnlpCfCvYanUL5TjIZEbdclBUwLooSQ==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -2714,17 +2705,6 @@ packages:
     resolution: {integrity: sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg==}
     engines: {node: '>=0.4.0'}
     hasBin: true
-
-  ai-sdk-zhipu@0.0.2:
-    resolution: {integrity: sha512-DHGvfjE2vywR8XVMOsYMgBhZuc24YDP7cR71/cv8TfHZEsItjF9eJUWb/15EWUTJ1cOE4pUHhe9td5UTh9lO6A==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      '@ai-sdk/openai-compatible': ^2.0.0
-      '@ai-sdk/provider': ^3.0.0
-      ai: '>=5 <7'
-    peerDependenciesMeta:
-      ai:
-        optional: true
 
   ai@6.0.3:
     resolution: {integrity: sha512-OOo+/C+sEyscoLnbY3w42vjQDICioVNyS+F+ogwq6O5RJL/vgWGuiLzFwuP7oHTeni/MkmX8tIge48GTdaV7QQ==}
@@ -5462,12 +5442,6 @@ snapshots:
       '@ai-sdk/provider-utils': 4.0.13(zod@4.2.1)
       zod: 4.2.1
 
-  '@ai-sdk/openai-compatible@2.0.27(zod@4.2.1)':
-    dependencies:
-      '@ai-sdk/provider': 3.0.7
-      '@ai-sdk/provider-utils': 4.0.13(zod@4.2.1)
-      zod: 4.2.1
-
   '@ai-sdk/openai@3.0.1(zod@4.2.1)':
     dependencies:
       '@ai-sdk/provider': 3.0.0
@@ -7845,16 +7819,6 @@ snapshots:
       acorn: 8.15.0
 
   acorn@8.15.0: {}
-
-  ai-sdk-zhipu@0.0.2(@ai-sdk/openai-compatible@2.0.27(zod@4.2.1))(@ai-sdk/provider@3.0.7)(ai@6.0.3(zod@4.2.1))(zod@4.2.1):
-    dependencies:
-      '@ai-sdk/openai-compatible': 2.0.27(zod@4.2.1)
-      '@ai-sdk/provider': 3.0.7
-      '@ai-sdk/provider-utils': 4.0.13(zod@4.2.1)
-    optionalDependencies:
-      ai: 6.0.3(zod@4.2.1)
-    transitivePeerDependencies:
-      - zod
 
   ai@6.0.3(zod@4.2.1):
     dependencies:

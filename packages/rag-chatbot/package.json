@@ -42,7 +42,6 @@
     "@tanstack/react-query-next-experimental": "^5.91.0",
     "@xyflow/react": "^12.10.0",
     "ai": "^6.0.3",
-    "ai-sdk-zhipu": "^0.0.2",
     "bcrypt-ts": "^8.0.0",
     "better-auth": "^1.4.10",
     "cheerio": "^1.2.0",

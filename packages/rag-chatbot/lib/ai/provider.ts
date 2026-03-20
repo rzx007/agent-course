@@ -2,7 +2,7 @@ import type { LanguageModel } from "ai";
 import { createDeepSeek } from "@ai-sdk/deepseek";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
-import { zhipu } from "ai-sdk-zhipu";
+import { createZhipu } from "zhipu-ai-provider";
 import { chatModels } from "./models";
 
 /**
@@ -14,6 +14,7 @@ const providerCache: Record<
   | ReturnType<typeof createDeepSeek>
   | ReturnType<typeof createOpenAI>
   | ReturnType<typeof createGoogleGenerativeAI>
+  | ReturnType<typeof createZhipu>
 > = {};
 
 function getProviderName(modelId: string): string {
@@ -100,6 +101,23 @@ function getGoogleProvider() {
 }
 
 /**
+ * 智谱 / Z.AI：默认 bigmodel.cn；设置 ZHIPU_BASE_URL 可走 Z.AI 国际站等自定义前缀。
+ * @see https://github.com/Xiang-CH/zhipu-ai-provider
+ */
+function getZhipuProvider() {
+  if (!providerCache.zhipu) {
+    const apiKey = process.env.ZHIPU_API_KEY;
+    if (!apiKey)
+      throw new Error("ZHIPU_API_KEY is required for zhipu provider");
+    const baseURL = process.env.ZHIPU_BASE_URL?.trim();
+    providerCache.zhipu = createZhipu(
+      baseURL ? { baseURL, apiKey } : { apiKey }
+    );
+  }
+  return providerCache.zhipu as ReturnType<typeof createZhipu>;
+}
+
+/**
  * 根据 modelId 返回对应的 LanguageModel，供 streamText / generateText 使用。
  * 优先从 chatModels 解析 provider，未找到则按 modelId 前缀推断。
  */
@@ -109,26 +127,28 @@ export function getModel(modelId: string): LanguageModel {
   switch (providerName) {
     case "deepseek": {
       const provider = getDeepSeekProvider();
-      return provider.chat(modelId);
+      return provider.chat(modelId) as LanguageModel;
     }
     case "xiaomi": {
       const provider = getXiaomiProvider();
-      return provider.chat(modelId);
+      return provider.chat(modelId) as LanguageModel;
     }
     case "openai": {
       const provider = getOpenAIProvider();
-      return provider.chat(modelId);
+      return provider.chat(modelId) as LanguageModel;
     }
     case "google": {
       const provider = getGoogleProvider();
-      return provider.chat(modelId);
+      return provider.chat(modelId) as LanguageModel;
     }
     case "zhipu": {
-      return zhipu(modelId as Parameters<typeof zhipu>[0]);
+      const zhipuProvider = getZhipuProvider();
+      // zhipu-ai-provider 依赖 @ai-sdk/provider v2，与 ai@6 类型树并存时需断言
+      return zhipuProvider.chat(modelId) as LanguageModel;
     }
     default: {
       const provider = getDeepSeekProvider();
-      return provider.chat(modelId);
+      return provider.chat(modelId) as LanguageModel;
     }
   }
 }
